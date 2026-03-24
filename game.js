@@ -255,6 +255,10 @@ let usedBeraniSet = new Set();
 let usedTruth = { mild: [], medium: [], hot: [] };
 let usedDare = { mild: [], medium: [], hot: [] };
 let usedDuo = [];
+// These were previously used but removed — keep as empty arrays to avoid ReferenceError
+let usedLiarTruth = [];
+let usedLiarDare = [];
+let usedBerani = [];
 
 // Pick a random unused challenge from pool. Resets set if all exhausted.
 function pickUnused(pool, usedSet) {
@@ -348,8 +352,13 @@ function formatDuration(sec) {
 
 // ─── NAME SCREEN ─────────────────────────────────────────────────
 function startGame() {
-  const n0 = document.getElementById('name0').value.trim() || 'Kamu';
-  const n1 = document.getElementById('name1').value.trim() || 'Dia';
+  let n0 = document.getElementById('name0').value.trim() || 'Kamu';
+  let n1 = document.getElementById('name1').value.trim() || 'Dia';
+  // Enhancement: prevent identical names
+  if (n0.toLowerCase() === n1.toLowerCase()) {
+    n1 = n1 + ' (2)';
+    setTimeout(() => showStreakToast(`⚠️ Nama sama! Pemain 2 jadi "${n1}"`), 400);
+  }
   PLAYERS[0].name = n0;
   PLAYERS[1].name = n1;
   document.getElementById('pname-text-0').textContent = n0;
@@ -416,6 +425,23 @@ function initPionPickers() {
       el.style.width = '44px';
       el.innerHTML = `<div style="width:28px;height:36px">${pion.svg}</div><div class="pion-label">${pion.label.split(' ')[0]}</div>`;
       el.addEventListener('click', () => {
+        const other = 1 - pi;
+        // Enhancement: auto-swap if other player already using this pion
+        if (selectedPion[other] === idx) {
+          // Find next available pion for the other player
+          const next = (idx + 1) % ALL_PIONS.length;
+          selectedPion[other] = next;
+          // Refresh other player's picker UI
+          const otherWrap = document.getElementById(`pions${other}`);
+          if (otherWrap) {
+            otherWrap.querySelectorAll('.pion-option').forEach((o, i) => {
+              o.className = 'pion-option' + (i === next ? ` selected-${other}` : '');
+            });
+          }
+          const otherIcon = document.getElementById(`picon-${other}`);
+          if (otherIcon) otherIcon.innerHTML = ALL_PIONS[next].svg;
+          showStreakToast(`💱 Bidak ${ALL_PIONS[idx].label.split(' ')[0]} dipindah dari Pemain ${other + 1}!`);
+        }
         selectedPion[pi] = idx;
         // Update all options for this player
         wrap.querySelectorAll('.pion-option').forEach((o, i) => {
@@ -887,8 +913,28 @@ function animateSnakeLadder(playerIdx, from, to, callback) {
   const isSnake = to < from;
   const dur = isSnake ? 750 : 680;
 
+// Enhancement 4: flash overlay helper
+function flashOverlay(type) {
+  let overlay = document.getElementById('flash-overlay');
+  if (!overlay) {
+    overlay = document.createElement('div');
+    overlay.id = 'flash-overlay';
+    overlay.style.cssText = 'position:fixed;inset:0;pointer-events:none;z-index:50;opacity:0;transition:opacity 0.15s ease';
+    document.body.appendChild(overlay);
+  }
+  if (type === 'snake') {
+    overlay.style.background = 'radial-gradient(ellipse at center, rgba(244,63,94,0.55) 0%, transparent 70%)';
+  } else {
+    overlay.style.background = 'radial-gradient(ellipse at center, rgba(252,211,77,0.45) 0%, transparent 70%)';
+  }
+  overlay.style.opacity = '1';
+  setTimeout(() => { overlay.style.opacity = '0'; }, 500);
+}
+
   if (isSnake) {
     sfx.snake(); vib([80, 40, 80]);
+    // Enhancement 4: dramatic red flash overlay
+    flashOverlay('snake');
     // Snake: spin + shrink + red tint
     el.style.transition = `transform 0.25s cubic-bezier(0.4,0,0.2,1), filter 0.25s ease`;
     el.style.transform = 'scale(1.3) rotate(-20deg) translateY(-8px)';
@@ -903,6 +949,8 @@ function animateSnakeLadder(playerIdx, from, to, callback) {
     }, 200);
   } else {
     sfx.ladder(); vib([30, 20, 60]);
+    // Enhancement 4: dramatic gold flash overlay
+    flashOverlay('ladder');
     // Ladder: bounce up with glow
     el.style.transition = `transform 0.22s cubic-bezier(0.34,1.56,0.64,1), filter 0.2s ease`;
     el.style.transform = 'scale(1.6) translateY(-14px)';
@@ -1056,10 +1104,9 @@ function parseDurationFromText(text) {
   if (minMatch) total += parseInt(minMatch[1]) * 60;
   const secMatch = original.match(/([0-9]+)\s*detik/i);
   if (secMatch) {
-    const s = parseInt(secMatch[1]);
-    if (total === 0) total = s;
+    total += parseInt(secMatch[1]); // always add seconds, even if minutes already found
   }
-  return total > 0 ? total : null;
+  return total > 0 ? Math.min(total, 300) : null; // Enhancement 5: cap at 5 minutes
 }
 
 function formatTimerHint(secs) {
@@ -1519,6 +1566,33 @@ function todDone(completed) {
   stopTimer();
   document.getElementById('tod-overlay').classList.remove('show');
   resolveAfterTOD(completed, false);
+}
+
+// Enhancement 3: skip ke-2 butuh konfirmasi inline
+function trySkip() {
+  if (skipStreak[turn] >= 1) {
+    // Show inline confirmation inside the card
+    const penalty = currentTodType === 'berani' ? 5 : 3;
+    const prevBody = document.getElementById('tod-body').innerHTML;
+    document.getElementById('tod-body').innerHTML = `
+      <div style="text-align:center;padding:16px 4px">
+        <div style="font-size:36px;margin-bottom:10px">⚠️</div>
+        <div style="font-family:'Playfair Display',serif;font-size:16px;color:#fca5a5;margin-bottom:6px">Yakin mau skip?</div>
+        <div style="font-size:13px;color:rgba(255,255,255,0.5);margin-bottom:20px">Ini skip ke-${skipStreak[turn] + 1} dari 2 — kamu mundur <strong style="color:#f43f5e">${penalty} kotak</strong>!</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <button class="btn-skip" onclick="todDone(false)" style="background:linear-gradient(135deg,#f43f5e,#dc2626);color:white;font-weight:900;border:none">
+            ✅ Ya, Skip!
+          </button>
+          <button class="btn-done" onclick="document.getElementById('tod-body').innerHTML = ${JSON.stringify(prevBody).replace(/"/g,'&quot;')}" style="font-size:13px">
+            ❌ Batal, Lanjut!
+          </button>
+        </div>
+      </div>`;
+    sfx.skip();
+    return;
+  }
+  // First skip — no confirmation needed
+  todDone(false);
 }
 
 // Internal auto-done (timer ran out) — doesn't remove overlay (already removed by stopTimer timing)
@@ -2463,7 +2537,7 @@ function saveGame() {
       currentTodType, gameDurationSec,
       players: PLAYERS.map(p => ({ name: p.name, colorHex: p.colorHex })),
       stats,
-      usedTruth, usedDare, usedLiarTruth, usedLiarDare,
+      usedTruth, usedDare,
       usedDuo,
       CELL_TYPE,
       ts: Date.now(),
@@ -2489,8 +2563,8 @@ function loadGame() {
     d.players.forEach((p, i) => { PLAYERS[i].name = p.name; PLAYERS[i].colorHex = p.colorHex; });
     stats = d.stats;
     usedTruth = d.usedTruth; usedDare = d.usedDare;
-    usedLiarTruth = d.usedLiarTruth ?? []; usedLiarDare = d.usedLiarDare ?? [];
-    usedDuo = d.usedDuo; usedBerani = d.usedBerani;
+    usedLiarTruth = []; usedLiarDare = [];
+    usedDuo = d.usedDuo ?? []; usedBerani = d.usedBerani ?? [];
     CELL_TYPE = d.CELL_TYPE;
     return true;
   } catch (e) { return false; }
