@@ -290,6 +290,14 @@ function pickUnused(pool, usedSet) {
   usedSet.add(chosen);
   return chosen;
 }
+
+// ─── SANITIZE USER TEXT ──────────────────────────────────────────
+function sanitizeText(str) {
+  const d = document.createElement('div');
+  d.textContent = str;
+  return d.innerHTML; // encodes &, <, >, ", '
+}
+
 let CELL_TYPE = {};
 let currentTodType = null;
 
@@ -1115,23 +1123,23 @@ function animateSnakeLadder(playerIdx, from, to, callback) {
   const isSnake = to < from;
   const dur = isSnake ? 750 : 680;
 
-// Enhancement 4: flash overlay helper
-function flashOverlay(type) {
-  let overlay = document.getElementById('flash-overlay');
-  if (!overlay) {
-    overlay = document.createElement('div');
-    overlay.id = 'flash-overlay';
-    overlay.style.cssText = 'position:fixed;inset:0;pointer-events:none;z-index:50;opacity:0;transition:opacity 0.15s ease';
-    document.body.appendChild(overlay);
+  // Enhancement 4: flash overlay helper
+  function flashOverlay(type) {
+    let overlay = document.getElementById('flash-overlay');
+    if (!overlay) {
+      overlay = document.createElement('div');
+      overlay.id = 'flash-overlay';
+      overlay.style.cssText = 'position:fixed;inset:0;pointer-events:none;z-index:50;opacity:0;transition:opacity 0.15s ease';
+      document.body.appendChild(overlay);
+    }
+    if (type === 'snake') {
+      overlay.style.background = 'radial-gradient(ellipse at center, rgba(244,63,94,0.55) 0%, transparent 70%)';
+    } else {
+      overlay.style.background = 'radial-gradient(ellipse at center, rgba(252,211,77,0.45) 0%, transparent 70%)';
+    }
+    overlay.style.opacity = '1';
+    setTimeout(() => { overlay.style.opacity = '0'; }, 500);
   }
-  if (type === 'snake') {
-    overlay.style.background = 'radial-gradient(ellipse at center, rgba(244,63,94,0.55) 0%, transparent 70%)';
-  } else {
-    overlay.style.background = 'radial-gradient(ellipse at center, rgba(252,211,77,0.45) 0%, transparent 70%)';
-  }
-  overlay.style.opacity = '1';
-  setTimeout(() => { overlay.style.opacity = '0'; }, 500);
-}
 
   if (isSnake) {
     sfx.snake(); vib([80, 40, 80]);
@@ -1662,7 +1670,7 @@ function renderChallenge(type, sq, level) {
           usedCustomTruth.push(ci);
           const aku = PLAYERS[turn].name;
           const kamu = PLAYERS[(turn + 1) % 2].name;
-          const challenge = customTruths[ci]
+          const challenge = sanitizeText(customTruths[ci])
             .replace(/\{AKU\}/g, `<strong style="color:${PLAYERS[turn].colorHex}">${aku}</strong>`)
             .replace(/\{KAMU\}/g, `<strong style="color:${PLAYERS[(turn + 1) % 2].colorHex}">${kamu}</strong>`);
           stopTimer();
@@ -1694,7 +1702,7 @@ function renderChallenge(type, sq, level) {
           usedCustomDare.push(ci);
           const aku = PLAYERS[turn].name;
           const kamu = PLAYERS[(turn + 1) % 2].name;
-          const challenge = customDares[ci]
+          const challenge = sanitizeText(customDares[ci])
             .replace(/\{AKU\}/g, `<strong style="color:${PLAYERS[turn].colorHex}">${aku}</strong>`)
             .replace(/\{KAMU\}/g, `<strong style="color:${PLAYERS[(turn + 1) % 2].colorHex}">${kamu}</strong>`);
           const customParsed = parseDurationFromText(customDares[ci]);
@@ -1750,7 +1758,7 @@ function renderChallenge(type, sq, level) {
     <div class="tod-challenge" style="font-size:15px;line-height:1.7">${challenge}</div>
     <div class="tod-action-btns">
       <button type="button" class="btn-done" data-action="tod-done" data-completed="true">✅ Selesai!</button>
-      <button type="button" class="btn-skip" data-action="tod-done" data-completed="false">❌ Skip (−3)</button>
+      <button type="button" class="btn-skip" data-action="try-skip">❌ Skip (−3)</button>
     </div>
     <div class="tod-rule">${isT ? 'Jawab jujur ya... 👀' : 'Berani lakukan ini? 🔥'}</div>`;
   registerTodReviewSnapshot(sq, isT ? '🤫 Truth' : '🔥 Dare');
@@ -2801,6 +2809,13 @@ window.addEventListener('load', () => {
   checkSavedGame();
 });
 
+window.addEventListener('beforeunload', (e) => {
+  if (phase !== 'done' && totalRounds > 0) {
+    e.preventDefault();
+    e.returnValue = '';
+  }
+});
+
 document.addEventListener('keydown', (e) => {
   if (e.key !== 'Escape') return;
   const trev = document.getElementById('tod-review-overlay');
@@ -2837,6 +2852,11 @@ function saveGame() {
       stats,
       usedTruth, usedDare,
       usedDuo,
+      // Serialize Sets as arrays so no-repeat tracking survives resume
+      usedTruthArr: [...usedTruthSet],
+      usedDareArr: [...usedDareSet],
+      usedDuoArr: [...usedDuoSet],
+      usedBeraniArr: [...usedBeraniSet],
       CELL_TYPE,
       ts: Date.now(),
     };
@@ -2871,6 +2891,11 @@ function loadGame() {
     usedTruth = d.usedTruth; usedDare = d.usedDare;
     usedLiarTruth = []; usedLiarDare = [];
     usedDuo = d.usedDuo ?? []; usedBerani = d.usedBerani ?? [];
+    // Rebuild Sets from saved arrays — restores no-repeat tracking after resume
+    usedTruthSet = new Set(d.usedTruthArr ?? []);
+    usedDareSet = new Set(d.usedDareArr ?? []);
+    usedDuoSet = new Set(d.usedDuoArr ?? []);
+    usedBeraniSet = new Set(d.usedBeraniArr ?? []);
     CELL_TYPE = d.CELL_TYPE;
     return true;
   } catch (e) { return false; }
