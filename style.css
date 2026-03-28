@@ -46,7 +46,7 @@ input, textarea { -webkit-user-select: text; user-select: text; }
     font-size: clamp(18px, 4.5vw, 30px); font-weight: 900;
     background: linear-gradient(90deg, #f472b6, #fb7185, #fcd34d, #f472b6);
     background-size: 300%;
-    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
     animation: gradientShift 5s linear infinite;
     text-align: center; margin-bottom: 4px;
     position: relative; z-index: 1;
@@ -69,11 +69,81 @@ input, textarea { -webkit-user-select: text; user-select: text; }
       radial-gradient(ellipse at 70% 80%, rgba(251,146,60,0.12) 0%, transparent 50%);
     overflow-y: auto;
   }
+
+  /* ── AGE VERIFICATION OVERLAY ── */
+  body:not(.age-verified) #age-gate {
+    display: flex !important;
+  }
+  body.age-verified #age-gate {
+    display: none !important;
+  }
+  #age-gate {
+    position: fixed; inset: 0;
+    background: rgba(10, 5, 10, 0.98);
+    align-items: center; justify-content: center;
+    z-index: 2147483647; padding: 20px;
+    backdrop-filter: blur(10px);
+    transition: opacity 0.5s ease;
+  }
+  #age-overlay.hide {
+    opacity: 0; pointer-events: none; transform: scale(1.1);
+  }
+  .age-card {
+    background: linear-gradient(160deg, #1a0f18, #2a0f1e);
+    border: 2px solid rgba(244, 63, 94, 0.4);
+    border-radius: 28px; padding: 32px 28px;
+    max-width: 440px; width: 100%;
+    text-align: center;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8), 0 0 40px rgba(244, 63, 94, 0.15);
+    animation: modalIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  .age-warning-icon { font-size: 64px; margin-bottom: 12px; animation: heartBeat 2s infinite; }
+  .age-card h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 28px; font-weight: 900;
+    background: linear-gradient(135deg, #f472b6, #fb7185);
+    -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+    margin-bottom: 12px;
+  }
+  .age-card p {
+    font-size: 15px; color: #ddd; line-height: 1.6;
+    margin-bottom: 24px;
+  }
+  .age-btns {
+    display: flex; gap: 12px; flex-direction: column;
+    margin-bottom: 20px;
+  }
+  .btn-age-confirm {
+    padding: 16px;
+    background: linear-gradient(135deg, #f43f5e, #fb923c);
+    background-clip: border-box;
+    border: none; border-radius: 50px;
+    color: white; font-weight: 900; font-size: 16px;
+    cursor: pointer; font-family: 'Nunito', sans-serif;
+    box-shadow: 0 6px 20px rgba(244, 63, 94, 0.4);
+    transition: all 0.2s;
+  }
+  .btn-age-confirm:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(244, 63, 94, 0.5); }
+  .btn-age-exit {
+    padding: 12px;
+    background: rgba(255,255,255,0.05);
+    border: 1.5px solid rgba(255,255,255,0.1);
+    border-radius: 50px;
+    color: #888; font-weight: 700; font-size: 14px;
+    cursor: pointer; font-family: 'Nunito', sans-serif;
+    transition: all 0.2s;
+  }
+  .btn-age-exit:hover { background: rgba(255,255,255,0.1); color: white; }
+  .age-disclaimer {
+    font-size: 11px !important; color: rgba(255,255,255,0.3) !important;
+    line-height: 1.4 !important; margin-bottom: 0 !important;
+  }
+
   #name-screen h2 {
     font-family: 'Playfair Display', serif;
     font-size: clamp(22px, 5vw, 36px);
     background: linear-gradient(90deg, #f472b6, #fcd34d);
-    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
     margin-bottom: 6px; text-align: center;
   }
   /* ── COLOR PICKER ── */
@@ -652,7 +722,7 @@ input, textarea { -webkit-user-select: text; user-select: text; }
     font-family: 'Playfair Display', serif;
     font-size: 20px; font-weight: 900; text-align: center;
     background: linear-gradient(90deg,#f472b6,#fcd34d);
-    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
     margin-bottom: 20px;
   }
   .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 18px; }

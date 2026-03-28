@@ -20,6 +20,7 @@
   <div id="heat-overlay"></div>
   <div id="streak-toast"></div>
 
+
   <!-- ── NAME SCREEN ── -->
   <div id="name-screen">
     <div style="font-size:52px;margin-bottom:12px;animation:heartBeat 2s ease infinite">💕</div>
@@ -351,6 +352,32 @@
   </div>
 
   <canvas id="confetti-canvas"></canvas>
+
+      const overlay = document.getElementById('mustconfirm-age-warning-screen');
+      const observer = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+          if (mutation.type === 'attributes' && mutation.attributeName === 'style') {
+            console.log("Style changed to: " + overlay.style.display);
+            if (overlay.style.display === 'none') {
+              console.trace("Who hid the overlay?");
+            }
+          }
+        });
+      });
+      observer.observe(overlay, { attributes: true });
+
+      if (sessionStorage.getItem('ageVerified_v4') === 'true') {
+        console.log("Age already verified (v4), hiding with 1s delay for tracing...");
+        setTimeout(() => {
+          overlay.style.display = 'none';
+        }, 1000);
+      } else {
+        console.log("Age NOT verified (v4), staying visible.");
+        overlay.style.display = 'flex';
+      }
+    })();
+  </script>
+
   <script src="challenges-romantis.js"></script>
   <script src="challenges-playful.js"></script>
   <script src="challenges-liar.js"></script>

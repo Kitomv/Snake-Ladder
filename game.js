@@ -637,10 +637,31 @@ function initActionDelegation() {
       case 'close-tod-review':
         hideTodReviewOverlay();
         break;
+      case 'confirm-age':
+        confirmAge();
+        break;
+      case 'exit-game':
+        window.location.href = 'https://www.google.com';
+        break;
       default:
         break;
     }
   });
+}
+
+function confirmAge() {
+  const gate = document.getElementById('age-gate');
+  if (gate) {
+    gate.style.opacity = '0';
+    gate.style.pointerEvents = 'none';
+    gate.style.transform = 'scale(1.1)';
+    gate.style.transition = 'all 0.5s ease';
+    // Add the class to body to enforce CSS hiding
+    document.body.classList.add('age-verified');
+    // Save to session storage
+    sessionStorage.setItem('ageVerified_v7', 'true');
+    sfx.pop(0.1);
+  }
 }
 
 // ─── HEARTS ──────────────────────────────────────────────────────
