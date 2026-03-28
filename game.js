@@ -218,6 +218,12 @@ const SPECIAL_CELLS = {
 
 // ─── GAME STATE ──────────────────────────────────────────────────
 let currentMood = 'romantis'; // 'romantis' | 'playful' | 'liar'
+/** Saat true: mode Liar disembunyikan & sel Berani diperlakukan seperti Dare biasa */
+let santaiOnlyMode = false;
+
+function isLiarModeActive() {
+  return currentMood === 'liar' && !santaiOnlyMode;
+}
 
 let PLAYERS = [
   { name: "Pemain 1", colorHex: "#f472b6" },
@@ -297,10 +303,27 @@ let totalRounds = 0;
 
 // ─── MOOD SELECTOR ───────────────────────────────────────────────
 function selectMood(mood) {
+  if (santaiOnlyMode && mood === 'liar') return;
   currentMood = mood;
   ['romantis', 'playful', 'liar'].forEach(m => {
-    document.getElementById(`mood-${m}`).classList.toggle('active', m === mood);
+    const el = document.getElementById(`mood-${m}`);
+    if (el) el.classList.toggle('active', m === mood);
   });
+}
+
+function applySantaiModeUI() {
+  const liarBtn = document.getElementById('mood-liar');
+  const ns = document.getElementById('name-screen');
+  if (!liarBtn) return;
+  if (santaiOnlyMode) {
+    liarBtn.style.display = 'none';
+    liarBtn.classList.remove('active');
+    if (currentMood === 'liar') selectMood('playful');
+    if (ns) ns.classList.add('santai-on');
+  } else {
+    liarBtn.style.display = '';
+    if (ns) ns.classList.remove('santai-on');
+  }
 }
 
 // ─── GAME DURATION TIMER ─────────────────────────────────────────
@@ -352,6 +375,12 @@ function formatDuration(sec) {
 
 // ─── NAME SCREEN ─────────────────────────────────────────────────
 function startGame() {
+  const consent = document.getElementById('consent-17');
+  if (!consent || !consent.checked) {
+    showStreakToast('⚠️ Centang persetujuan usia & konsensualitas dulu ya 💕');
+    return;
+  }
+  if (santaiOnlyMode && currentMood === 'liar') selectMood('playful');
   let n0 = document.getElementById('name0').value.trim() || 'Kamu';
   let n1 = document.getElementById('name1').value.trim() || 'Dia';
   // Enhancement: prevent identical names
@@ -403,12 +432,12 @@ function startGame() {
 function initCellTypes() {
   CELL_TYPE = {};
   // Mood affects truth/dare ratio: romantis=65% truth, playful=50/50, liar=65% dare
-  const truthProb = currentMood === 'romantis' ? 0.65 : currentMood === 'liar' ? 0.35 : 0.50;
+  const truthProb = currentMood === 'romantis' ? 0.65 : isLiarModeActive() ? 0.35 : 0.50;
   for (let i = 1; i <= 100; i++) {
     if (SPECIAL_CELLS[i]) {
       const t = SPECIAL_CELLS[i];
-      // Berani cells only active in liar mode — otherwise treat as dare
-      CELL_TYPE[i] = (t === 'berani' && currentMood !== 'liar') ? 'dare' : t;
+      // Berani aktif hanya jika mode Liar nyala (bukan Mode santai)
+      CELL_TYPE[i] = (t === 'berani' && !isLiarModeActive()) ? 'dare' : t;
     } else CELL_TYPE[i] = Math.random() < truthProb ? 'truth' : 'dare';
   }
 }
@@ -460,13 +489,131 @@ function initPionPickers() {
 function initInputListeners() {
   document.getElementById('name0').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('name1').focus(); });
   document.getElementById('name1').addEventListener('keydown', e => { if (e.key === 'Enter') startGame(); });
+  const consent = document.getElementById('consent-17');
+  const startBtn = document.getElementById('btn-start');
+  if (consent && startBtn) {
+    const syncStart = () => { startBtn.disabled = !consent.checked; };
+    consent.addEventListener('change', syncStart);
+    syncStart();
+  }
+  const santaiEl = document.getElementById('santai-only');
+  if (santaiEl) {
+    santaiOnlyMode = santaiEl.checked;
+    santaiEl.addEventListener('change', () => {
+      santaiOnlyMode = santaiEl.checked;
+      applySantaiModeUI();
+    });
+  }
+  applySantaiModeUI();
+  const dw = document.getElementById('dice-wrap');
+  if (dw) dw.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); rollDice(); } });
   initPionPickers();
+}
+
+function initActionDelegation() {
+  document.body.addEventListener('click', (e) => {
+    const el = e.target.closest('[data-action]');
+    if (!el) return;
+    const action = el.dataset.action;
+    switch (action) {
+      case 'tod-done':
+        todDone(el.dataset.completed !== 'false');
+        break;
+      case 'try-skip':
+        trySkip();
+        break;
+      case 'resolve-wild':
+        resolveWild(el.dataset.wild, +el.dataset.sq, el.dataset.level);
+        break;
+      case 'cancel-skip-confirm':
+        if (window._todPrevBodyForSkip != null) {
+          document.getElementById('tod-body').innerHTML = window._todPrevBodyForSkip;
+          window._todPrevBodyForSkip = null;
+        }
+        break;
+      case 'resume-game':
+        resumeGame();
+        break;
+      case 'dismiss-save':
+        dismissSave();
+        break;
+      case 'show-rules':
+        showRules();
+        break;
+      case 'hide-rules':
+        hideRules();
+        break;
+      case 'show-custom':
+        showCustomOverlay();
+        break;
+      case 'hide-custom':
+        hideCustomOverlay();
+        break;
+      case 'set-custom-tab':
+        setCustomTab(el.dataset.tab);
+        break;
+      case 'add-custom':
+        addCustomTantangan();
+        break;
+      case 'start-game':
+        startGame();
+        break;
+      case 'select-mood':
+        if (el.dataset.mood) selectMood(el.dataset.mood);
+        break;
+      case 'roll-dice':
+        rollDice();
+        break;
+      case 'use-joker-panel':
+        useJokerFromPanel(+el.dataset.player);
+        break;
+      case 'show-stats':
+        showStats();
+        break;
+      case 'close-stats':
+        document.getElementById('stats-overlay').classList.remove('show');
+        break;
+      case 'toggle-music':
+        toggleMusic();
+        break;
+      case 'toggle-mute':
+        toggleMute();
+        break;
+      case 'go-mood':
+        goToMoodScreen();
+        break;
+      case 'timer-start':
+        manualStartTimer();
+        break;
+      case 'timer-skip':
+        manualSkipTimer();
+        break;
+      case 'use-joker':
+        useJoker();
+        break;
+      case 'show-recap':
+        showRecap();
+        break;
+      case 'confirm-reset':
+        confirmReset();
+        break;
+      case 'download-recap':
+        downloadRecap();
+        break;
+      case 'close-recap':
+        document.getElementById('recap-overlay').classList.remove('show');
+        break;
+      default:
+        break;
+    }
+  });
 }
 
 // ─── HEARTS ──────────────────────────────────────────────────────
 function spawnHearts() {
   const bg = document.getElementById('hearts-bg');
   if (bg.children.length > 0) return; // only spawn once
+  if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
   const emojis = ['💕', '💗', '💖', '❤️', '🌹', '✨', '💫'];
   for (let i = 0; i < 10; i++) {
     const h = document.createElement('span');
@@ -495,7 +642,7 @@ function buildBoard() {
       if (special === 'duo') cls += 'cell-duo';
       else if (special === 'joker') cls += 'cell-joker';
       else if (special === 'wild') cls += 'cell-wild';
-      else if (special === 'berani') cls += 'cell-berani';
+      else if (special === 'berani' && isLiarModeActive()) cls += 'cell-berani';
       else cls += (n % 2 === 0 ? 'cell-even' : 'cell-odd');
       if (SNAKES[n]) cls += ' cell-snake';
       if (LADDERS[n]) cls += ' cell-ladder';
@@ -1267,12 +1414,12 @@ function getAdaptiveLevel(sq) {
 // Helper: get active challenges pool based on currentMood
 function getPool() {
   if (currentMood === 'romantis') return window.CHALLENGES_ROMANTIS;
-  if (currentMood === 'liar') return window.CHALLENGES_LIAR;
+  if (isLiarModeActive()) return window.CHALLENGES_LIAR;
   return window.CHALLENGES_PLAYFUL; // default playful
 }
 
 function setLevelUI(level) {
-  const moodLabel = currentMood === 'liar' ? '💋' : currentMood === 'romantis' ? '💕' : '😜';
+  const moodLabel = isLiarModeActive() ? '💋' : currentMood === 'romantis' ? '💕' : '😜';
   const labels = {
     mild: `🌸 Level Ringan`,
     medium: `🔥 Level Panas`,
@@ -1341,7 +1488,7 @@ function showTOD(sq) {
   if (type === 'joker') showJokerCell(sq, level);
   else if (type === 'duo') showDuoChallenge(sq, level);
   else if (type === 'wild') showWildChoice(sq, level);
-  else if (type === 'berani' && currentMood === 'liar') showBeraniChallenge(sq, level);
+  else if (type === 'berani' && isLiarModeActive()) showBeraniChallenge(sq, level);
   else if (type === 'berani') renderChallenge('dare', sq, level); // non-liar: treat as dare
   else renderChallenge(type, sq, level);
 }
@@ -1364,7 +1511,7 @@ function showJokerCell(sq, level) {
       <small style="color:#aaa;font-size:13px">Total joker kamu: ${jokerCount[turn]}x</small>
     </div>
     <div class="tod-action-btns" style="grid-template-columns:1fr">
-      <button class="btn-done" onclick="todDone(true)">✅ Sip, lanjut!</button>
+      <button type="button" class="btn-done" data-action="tod-done" data-completed="true">✅ Sip, lanjut!</button>
     </div>`;
 }
 
@@ -1389,8 +1536,8 @@ function showDuoChallenge(sq, level) {
     </div>
     <div class="tod-challenge" style="font-size:15px;line-height:1.7">${challenge}</div>
     <div class="tod-action-btns">
-      <button class="btn-done" onclick="todDone(true)">✅ Selesai!</button>
-      <button class="btn-skip" onclick="trySkip()">❌ Skip (−3)</button>
+      <button type="button" class="btn-done" data-action="tod-done" data-completed="true">✅ Selesai!</button>
+      <button type="button" class="btn-skip" data-action="try-skip">❌ Skip (−3)</button>
     </div>
     <div class="tod-rule">Tantangan untuk kalian berdua! 💕</div>`;
 }
@@ -1407,7 +1554,7 @@ function showWildChoice(sq, level) {
       <strong style="color:${p.colorHex}">${p.name}</strong> bebas pilih tantangannya! ✨
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-      <button onclick="resolveWild('truth',${sq},'${level}')" style="
+      <button type="button" data-action="resolve-wild" data-wild="truth" data-sq="${sq}" data-level="${level}" style="
         padding:20px 12px;border:none;border-radius:16px;color:white;
         background:linear-gradient(135deg,#6366f1,#8b5cf6);
         font-family:'Nunito',sans-serif;font-weight:900;font-size:17px;
@@ -1416,7 +1563,7 @@ function showWildChoice(sq, level) {
         <span style="font-size:28px">🤫</span>TRUTH
         <span style="font-size:11px;opacity:.8">Jujur saja</span>
       </button>
-      <button onclick="resolveWild('dare',${sq},'${level}')" style="
+      <button type="button" data-action="resolve-wild" data-wild="dare" data-sq="${sq}" data-level="${level}" style="
         padding:20px 12px;border:none;border-radius:16px;color:white;
         background:linear-gradient(135deg,#f43f5e,#fb923c);
         font-family:'Nunito',sans-serif;font-weight:900;font-size:17px;
@@ -1464,8 +1611,8 @@ function renderChallenge(type, sq, level) {
             </div>
             <div class="tod-challenge" style="font-size:15px;line-height:1.7">${challenge}</div>
             <div class="tod-action-btns">
-              <button class="btn-done" onclick="todDone(true)">✅ Selesai!</button>
-              <button class="btn-skip" onclick="trySkip()">❌ Skip (−3)</button>
+              <button type="button" class="btn-done" data-action="tod-done" data-completed="true">✅ Selesai!</button>
+              <button type="button" class="btn-skip" data-action="try-skip">❌ Skip (−3)</button>
             </div>
             <div class="tod-rule">Jawab jujur ya... 👀</div>`;
           return;
@@ -1500,8 +1647,8 @@ function renderChallenge(type, sq, level) {
             </div>
             <div class="tod-challenge" style="font-size:15px;line-height:1.7">${challenge}</div>
             <div class="tod-action-btns">
-              <button class="btn-done" onclick="todDone(true)">✅ Selesai!</button>
-              <button class="btn-skip" onclick="trySkip()">❌ Skip (−3)</button>
+              <button type="button" class="btn-done" data-action="tod-done" data-completed="true">✅ Selesai!</button>
+              <button type="button" class="btn-skip" data-action="try-skip">❌ Skip (−3)</button>
             </div>
             <div class="tod-rule">Berani lakukan ini? 🔥</div>`;
           return;
@@ -1539,8 +1686,8 @@ function renderChallenge(type, sq, level) {
     </div>
     <div class="tod-challenge" style="font-size:15px;line-height:1.7">${challenge}</div>
     <div class="tod-action-btns">
-      <button class="btn-done" onclick="todDone(true)">✅ Selesai!</button>
-      <button class="btn-skip" onclick="todDone(false)">❌ Skip (−3)</button>
+      <button type="button" class="btn-done" data-action="tod-done" data-completed="true">✅ Selesai!</button>
+      <button type="button" class="btn-skip" data-action="tod-done" data-completed="false">❌ Skip (−3)</button>
     </div>
     <div class="tod-rule">${isT ? 'Jawab jujur ya... 👀' : 'Berani lakukan ini? 🔥'}</div>`;
 }
@@ -1573,17 +1720,17 @@ function trySkip() {
   if (skipStreak[turn] >= 1) {
     // Show inline confirmation inside the card
     const penalty = currentTodType === 'berani' ? 5 : 3;
-    const prevBody = document.getElementById('tod-body').innerHTML;
+    window._todPrevBodyForSkip = document.getElementById('tod-body').innerHTML;
     document.getElementById('tod-body').innerHTML = `
       <div style="text-align:center;padding:16px 4px">
         <div style="font-size:36px;margin-bottom:10px">⚠️</div>
         <div style="font-family:'Playfair Display',serif;font-size:16px;color:#fca5a5;margin-bottom:6px">Yakin mau skip?</div>
         <div style="font-size:13px;color:rgba(255,255,255,0.5);margin-bottom:20px">Ini skip ke-${skipStreak[turn] + 1} dari 2 — kamu mundur <strong style="color:#f43f5e">${penalty} kotak</strong>!</div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-          <button class="btn-skip" onclick="todDone(false)" style="background:linear-gradient(135deg,#f43f5e,#dc2626);color:white;font-weight:900;border:none">
+          <button type="button" class="btn-skip" data-action="tod-done" data-completed="false" style="background:linear-gradient(135deg,#f43f5e,#dc2626);color:white;font-weight:900;border:none">
             ✅ Ya, Skip!
           </button>
-          <button class="btn-done" onclick="document.getElementById('tod-body').innerHTML = ${JSON.stringify(prevBody).replace(/"/g,'&quot;')}" style="font-size:13px">
+          <button type="button" class="btn-done" data-action="cancel-skip-confirm" style="font-size:13px">
             ❌ Batal, Lanjut!
           </button>
         </div>
@@ -1611,7 +1758,7 @@ function resolveAfterTOD(completed, isJoker) {
       stats[turn].curStreak++;
       if (stats[turn].curStreak > stats[turn].maxStreak) stats[turn].maxStreak = stats[turn].curStreak;
       if (currentTodType === 'truth') stats[turn].truths++;
-      else if (currentTodType === 'dare') stats[turn].dares++;
+      else if (currentTodType === 'dare' || currentTodType === 'berani') stats[turn].dares++;
       else if (currentTodType === 'duo') stats[turn].duos++;
       else if (currentTodType === 'wild') stats[turn].wilds++;
 
@@ -1756,6 +1903,9 @@ function goToMoodScreen() {
   if (mb) mb.classList.add('active');
   // Show name screen
   document.getElementById('name-screen').style.display = 'flex';
+  const santaiEl = document.getElementById('santai-only');
+  if (santaiEl) santaiEl.checked = santaiOnlyMode;
+  applySantaiModeUI();
   initPionPickers();
   document.getElementById('mood-badge-bar').innerHTML = '';
 }
@@ -2261,8 +2411,8 @@ function showBeraniChallenge(sq, level) {
     </div>
     <div class="tod-challenge" style="font-size:15px;line-height:1.7">${challenge}</div>
     <div class="tod-action-btns">
-      <button class="btn-done" onclick="todDone(true)">✅ Selesai!</button>
-      <button class="btn-skip" onclick="trySkip()" style="opacity:0.6;font-size:12px">⚠️ Tidak Berani (−5)</button>
+      <button type="button" class="btn-done" data-action="tod-done" data-completed="true">✅ Selesai!</button>
+      <button type="button" class="btn-skip" data-action="try-skip" style="opacity:0.6;font-size:12px">⚠️ Tidak Berani (−5)</button>
     </div>
     <div class="tod-rule" style="color:#fb923c">Kartu Berani — skip mundur 5 kotak! 💪</div>`;
 }
@@ -2511,8 +2661,19 @@ function animateConfetti() {
 
 
 window.addEventListener('load', () => {
+  initActionDelegation();
   initInputListeners();
   checkSavedGame();
+});
+
+document.addEventListener('keydown', (e) => {
+  if (e.key !== 'Escape') return;
+  const rules = document.getElementById('rules-overlay');
+  const custom = document.getElementById('custom-overlay');
+  const stats = document.getElementById('stats-overlay');
+  if (rules && rules.style.display === 'flex') { hideRules(); e.preventDefault(); return; }
+  if (custom && custom.style.display === 'flex') { hideCustomOverlay(); e.preventDefault(); return; }
+  if (stats && stats.classList.contains('show')) { stats.classList.remove('show'); e.preventDefault(); }
 });
 
 // ─── localStorage SAVE / LOAD ─────────────────────────────────────
@@ -2533,7 +2694,7 @@ function saveGame() {
   try {
     const data = {
       pos, turn, phase, pendRaw, pendAfter, pendDice,
-      skipStreak, jokerCount, currentMood, totalRounds,
+      skipStreak, jokerCount, currentMood, santaiOnlyMode, totalRounds,
       currentTodType, gameDurationSec,
       players: PLAYERS.map(p => ({ name: p.name, colorHex: p.colorHex })),
       stats,
@@ -2558,8 +2719,16 @@ function loadGame() {
     pendRaw = d.pendRaw; pendAfter = d.pendAfter; pendDice = d.pendDice ?? 0;
     skipStreak = d.skipStreak; jokerCount = d.jokerCount;
     currentMood = d.currentMood; totalRounds = d.totalRounds;
+    santaiOnlyMode = !!d.santaiOnlyMode;
     currentTodType = d.currentTodType ?? null;
     gameDurationSec = d.gameDurationSec ?? 0;
+    if (santaiOnlyMode && currentMood === 'liar') currentMood = 'playful';
+    if (santaiOnlyMode && d.CELL_TYPE) {
+      for (let i = 1; i <= 100; i++) {
+        if (d.CELL_TYPE[i] === 'berani') d.CELL_TYPE[i] = 'dare';
+      }
+    }
+    if (santaiOnlyMode && currentTodType === 'berani') currentTodType = 'dare';
     d.players.forEach((p, i) => { PLAYERS[i].name = p.name; PLAYERS[i].colorHex = p.colorHex; });
     stats = d.stats;
     usedTruth = d.usedTruth; usedDare = d.usedDare;
@@ -2593,11 +2762,11 @@ function checkSavedGame() {
       <span style="font-size:13px;color:#f9a8d4">💾 Ada game tersimpan<br>
         <small style="color:rgba(255,255,255,0.45);font-size:11px">${d.players[0].name} vs ${d.players[1].name} · Kotak ${d.pos[0]}/${d.pos[1]}</small>
       </span>
-      <button onclick="resumeGame()" style="
+      <button type="button" data-action="resume-game" style="
         background:linear-gradient(135deg,#f43f5e,#fb923c);border:none;border-radius:12px;
         color:white;font-weight:900;font-size:12px;padding:8px 14px;cursor:pointer;
         font-family:'Nunito',sans-serif;">▶ Lanjut</button>
-      <button onclick="dismissSave()" style="
+      <button type="button" data-action="dismiss-save" style="
         background:none;border:1px solid rgba(255,255,255,0.15);border-radius:12px;
         color:rgba(255,255,255,0.45);font-size:12px;padding:8px 12px;cursor:pointer;
         font-family:'Nunito',sans-serif;">✕</button>

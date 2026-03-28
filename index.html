@@ -27,13 +27,19 @@
     <h2 style="font-size:clamp(14px,3vw,20px);margin-top:-4px">Truth or Dare</h2>
     <p style="margin-top:10px;color:#aaa;font-size:13px;margin-bottom:22px">Masukkan nama kalian untuk mulai 🔥</p>
 
-    <button onclick="showRules()" style="
-    background:rgba(244,63,94,0.1);border:1px solid rgba(244,63,94,0.3);
-    border-radius:20px;padding:8px 20px;color:#f9a8d4;cursor:pointer;
-    font-family:'Nunito',sans-serif;font-weight:800;font-size:13px;
-    margin-bottom:18px;transition:all .2s;letter-spacing:.5px"
-      onmouseover="this.style.background='rgba(244,63,94,0.2)'"
-      onmouseout="this.style.background='rgba(244,63,94,0.1)'">
+    <div class="consent-panel">
+      <label class="consent-label">
+        <input type="checkbox" id="consent-17" autocomplete="off" />
+        <span>Kami berusia <strong>17+</strong>, suasana aman, nyaman, dan <strong>konsensual</strong>. Konten dewasa pasangan —
+          tanggung jawab pemain.</span>
+      </label>
+      <label class="consent-label santai-label">
+        <input type="checkbox" id="santai-only" autocomplete="off" />
+        <span><strong>Mode santai saja</strong> — sembunyikan mode Liar &amp; kartu Berani (kotak oranye jadi Dare biasa).</span>
+      </label>
+    </div>
+
+    <button type="button" class="btn-secondary-rose" data-action="show-rules">
       📜 Lihat Peraturan Game
     </button>
 
@@ -60,33 +66,27 @@
       style="font-family:'Playfair Display',serif;font-size:13px;color:#f472b6;font-weight:700;margin-bottom:12px;letter-spacing:1px;text-align:center">
       🎭 Pilih Vibe Malam Ini</div>
     <div class="mood-selector">
-      <button class="mood-btn romantis active" id="mood-romantis" onclick="selectMood('romantis')">
+      <button type="button" class="mood-btn romantis active" id="mood-romantis" data-action="select-mood" data-mood="romantis">
         <span class="mood-emoji">💕</span>
         <span class="mood-name">ROMANTIS</span>
         <span class="mood-desc">Lembut & manis</span>
       </button>
-      <button class="mood-btn playful" id="mood-playful" onclick="selectMood('playful')">
+      <button type="button" class="mood-btn playful" id="mood-playful" data-action="select-mood" data-mood="playful">
         <span class="mood-emoji">😜</span>
         <span class="mood-name">PLAYFUL</span>
         <span class="mood-desc">Fun & seru</span>
       </button>
-      <button class="mood-btn liar" id="mood-liar" onclick="selectMood('liar')">
+      <button type="button" class="mood-btn liar" id="mood-liar" data-action="select-mood" data-mood="liar">
         <span class="mood-emoji">🔥</span>
         <span class="mood-name">LIAR</span>
         <span class="mood-desc">No limits!</span>
       </button>
     </div>
 
-    <button class="btn-start" onclick="startGame()">Mulai Sekarang 💕</button>
+    <button type="button" class="btn-start" id="btn-start" disabled data-action="start-game">Mulai Sekarang 💕</button>
 
-    <button onclick="showCustomOverlay()" style="
-    background:rgba(168,85,247,0.1);border:1px solid rgba(168,85,247,0.3);
-    border-radius:20px;padding:8px 20px;color:#c4b5fd;cursor:pointer;
-    font-family:'Nunito',sans-serif;font-weight:800;font-size:13px;
-    margin-bottom:18px;transition:all .2s;letter-spacing:.5px"
-      onmouseover="this.style.background='rgba(168,85,247,0.2)'"
-      onmouseout="this.style.background='rgba(168,85,247,0.1)'">
-      ✏️ Tantangan Kustom <span id="custom-count-label" style="opacity:.6">(0)</span>
+    <button type="button" class="btn-secondary-violet" data-action="show-custom">
+      ✏️ Tantangan Kustom <span id="custom-count-label" class="custom-count-lbl">(0)</span>
     </button>
   </div>
 
@@ -132,11 +132,11 @@
     </div>
 
     <div class="side-panel">
-      <svg id="dice-wrap" viewBox="0 0 100 100" onclick="rollDice()">
+      <svg id="dice-wrap" viewBox="0 0 100 100" data-action="roll-dice" role="button" tabindex="0">
         <rect rx="14" width="100" height="100" fill="#2a0f1e" />
         <text x="50" y="66" text-anchor="middle" font-size="44">🎲</text>
       </svg>
-      <button class="btn-roll" id="btn-roll" onclick="rollDice()">🎲 Lempar!</button>
+      <button type="button" class="btn-roll" id="btn-roll" data-action="roll-dice">🎲 Lempar!</button>
       <div class="legend">
         <div>🐍 Ular → turun</div>
         <div>🪜 Tangga → naik</div>
@@ -145,8 +145,8 @@
         <div>🎯 Kotak ungu → wild</div>
       </div>
       <div class="joker-area">
-        <div class="joker-token empty" id="joker-0" onclick="useJokerFromPanel(0)">🃏 0</div>
-        <div class="joker-token empty" id="joker-1" onclick="useJokerFromPanel(1)">🃏 0</div>
+        <div class="joker-token empty" id="joker-0" data-action="use-joker-panel" data-player="0" role="button" tabindex="0">🃏 0</div>
+        <div class="joker-token empty" id="joker-1" data-action="use-joker-panel" data-player="1" role="button" tabindex="0">🃏 0</div>
       </div>
 
       <!-- ── DURASI PERMAINAN ── -->
@@ -160,17 +160,13 @@
         <div class="log-entry">💕 Game dimulai!</div>
       </div>
       <div style="display:flex;gap:6px;width:100%">
-        <button class="btn-stats" onclick="showStats()" style="flex:1">📊 Statistik</button>
-        <button id="btn-music" onclick="toggleMusic()" title="Musik latar" class="btn-music-wrap">
+        <button type="button" class="btn-stats btn-stats-flex" data-action="show-stats">📊 Statistik</button>
+        <button type="button" id="btn-music" data-action="toggle-music" title="Musik latar" class="btn-music-wrap">
           <span class="music-dot"></span>🎵
         </button>
-        <button id="btn-mute" onclick="toggleMute()" title="Toggle suara" style="
-        padding:8px 10px;background:rgba(255,255,255,0.05);
-        border:1px solid rgba(255,255,255,0.09);border-radius:20px;
-        color:#aaa;cursor:pointer;font-size:14px;transition:all .2s;
-        font-family:'Nunito',sans-serif;flex-shrink:0">🔊</button>
+        <button type="button" id="btn-mute" data-action="toggle-mute" title="Toggle suara" class="btn-mute-ic">🔊</button>
       </div>
-      <button class="btn-reset" onclick="goToMoodScreen()">🚪 Ganti Mode</button>
+      <button type="button" class="btn-reset" data-action="go-mood">🚪 Ganti Mode</button>
     </div>
   </div>
 
@@ -179,8 +175,7 @@
     <div class="stats-card">
       <div class="stats-title">📊 Statistik Game</div>
       <div id="stats-body"></div>
-      <button class="btn-close-stats"
-        onclick="document.getElementById('stats-overlay').classList.remove('show')">Tutup</button>
+      <button type="button" class="btn-close-stats" data-action="close-stats">Tutup</button>
     </div>
   </div>
 
@@ -210,14 +205,10 @@
         <div class="timer-label">
           <span id="timer-level-hint">⏱️ Timer siap</span>
           <div style="display:flex;gap:6px;margin-top:6px">
-            <button id="btn-timer-start" onclick="manualStartTimer()" style="background:linear-gradient(135deg,#10b981,#059669);border:none;border-radius:10px;
-            color:white;font-weight:900;font-size:11px;padding:5px 10px;cursor:pointer;
-            font-family:'Nunito',sans-serif;transition:all .2s">
+            <button type="button" id="btn-timer-start" data-action="timer-start" class="btn-timer-start">
               ▶ Mulai
             </button>
-            <button id="btn-timer-skip" onclick="manualSkipTimer()" style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);
-            border-radius:10px;color:rgba(255,255,255,0.5);font-weight:700;font-size:11px;
-            padding:5px 10px;cursor:pointer;font-family:'Nunito',sans-serif;transition:all .2s">
+            <button type="button" id="btn-timer-skip" data-action="timer-skip" class="btn-timer-skip">
               ✕
             </button>
           </div>
@@ -225,7 +216,7 @@
       </div>
 
       <div id="tod-body"></div>
-      <button class="btn-joker" id="btn-joker" onclick="useJoker()">🃏 Joker: Skip Gratis + Imun Ular!</button>
+      <button type="button" class="btn-joker" id="btn-joker" data-action="use-joker">🃏 Joker: Skip Gratis + Imun Ular!</button>
       <div class="skip-warning" id="skip-warning">⚠️ Skip terakhir! (2/2)</div>
     </div>
   </div>
@@ -241,11 +232,9 @@
       <div style="color:#888;font-size:13px;margin-top:6px;margin-bottom:20px">Sampai di kotak 100! 💋</div>
       <div id="winner-stats-body" style="text-align:left"></div>
       <div style="display:flex;gap:10px;margin-top:20px;flex-wrap:wrap;justify-content:center">
-        <button class="winner-btn" style="margin-top:0" onclick="showRecap()">📸 Lihat Recap</button>
-        <button class="winner-btn" style="margin-top:0" onclick="confirmReset()">🎮 Main Lagi</button>
-        <button class="winner-btn"
-          style="margin-top:0;background:linear-gradient(135deg,#a855f7,#6366f1);box-shadow:0 6px 28px rgba(168,85,247,0.45)"
-          onclick="goToMoodScreen()">🎭 Ganti Mode</button>
+        <button type="button" class="winner-btn winner-btn-mt0" data-action="show-recap">📸 Lihat Recap</button>
+        <button type="button" class="winner-btn winner-btn-mt0" data-action="confirm-reset">🎮 Main Lagi</button>
+        <button type="button" class="winner-btn winner-btn-mt0 winner-btn-mode" data-action="go-mood">🎭 Ganti Mode</button>
       </div>
     </div>
   </div>
@@ -254,8 +243,8 @@
   <div id="recap-overlay">
     <canvas id="recap-canvas" width="360" height="640"></canvas>
     <div class="recap-actions">
-      <button class="btn-recap-dl" onclick="downloadRecap()">⬇️ Simpan Gambar</button>
-      <button class="btn-recap-close" onclick="document.getElementById('recap-overlay').classList.remove('show')">✕
+      <button type="button" class="btn-recap-dl" data-action="download-recap">⬇️ Simpan Gambar</button>
+      <button type="button" class="btn-recap-close" data-action="close-recap">✕
         Tutup</button>
     </div>
     <div style="font-size:11px;color:rgba(255,255,255,0.3);text-align:center">Screenshot atau klik Simpan untuk download
@@ -271,8 +260,7 @@
         <div
           style="font-family:'Playfair Display',serif;font-size:16px;color:#f472b6;font-weight:700;letter-spacing:1px">
           📜 Peraturan Game</div>
-        <button onclick="hideRules()"
-          style="background:none;border:none;color:rgba(255,255,255,0.4);font-size:22px;cursor:pointer;line-height:1;padding:0 4px">&times;</button>
+        <button type="button" class="modal-close-x" data-action="hide-rules">&times;</button>
       </div>
       <ol style="padding-left:18px;margin:0;display:flex;flex-direction:column;gap:9px;">
         <li style="color:#e2e8f0;font-size:13px;line-height:1.5">Lempar dadu secara bergantian — siapa duluan bebas
@@ -299,7 +287,9 @@
             style="color:#c4b5fd">Wild</strong> — bebas pilih Truth atau Dare!</li>
         <li style="color:#e2e8f0;font-size:13px;line-height:1.5">💪 Kotak oranye = <strong style="color:#fb923c">Kartu
             Berani</strong> — khusus mode 🔥 Liar, tantangan extra intens, skip mundur <strong style="color:#fb923c">5
-            kotak!</strong> Di mode lain kotak ini jadi Dare biasa.</li>
+            kotak!</strong> Di mode lain atau <strong style="color:#34d399">Mode santai</strong>, kotak ini tampil seperti Dare biasa.</li>
+        <li style="color:#e2e8f0;font-size:13px;line-height:1.5">✏️ <strong style="color:#c4b5fd">Tantangan kustom</strong>
+          sepenuhnya buatan pemain — kamu yang bertanggung jawab atas isi dan konteksnya.</li>
         <li style="color:#e2e8f0;font-size:13px;line-height:1.5">📈 <strong style="color:#34d399">Level Adaptif</strong>
           — kesulitan tantangan menyesuaikan performa! Sering selesai = level naik, sering skip = level turun.</li>
         <li style="color:#e2e8f0;font-size:13px;line-height:1.5">🔁 Tantangan tidak akan muncul ulang sampai semua kartu
@@ -307,8 +297,7 @@
         <li style="color:#e2e8f0;font-size:13px;line-height:1.5">🏆 Siapa yang pertama sampai kotak <span
             style="color:#fcd34d;font-weight:800">100</span> — menang!</li>
       </ol>
-      <button onclick="hideRules()"
-        style="margin-top:20px;width:100%;padding:12px;background:linear-gradient(135deg,#f43f5e,#fb923c);border:none;border-radius:16px;color:white;font-weight:900;font-size:15px;cursor:pointer;font-family:'Nunito',sans-serif">
+      <button type="button" class="btn-rules-ok" data-action="hide-rules">
         Siap! 💕
       </button>
     </div>
@@ -323,25 +312,23 @@
         <div
           style="font-family:'Playfair Display',serif;font-size:16px;color:#c4b5fd;font-weight:700;letter-spacing:1px">
           ✏️ Tantangan Kustom</div>
-        <button onclick="hideCustomOverlay()"
-          style="background:none;border:none;color:rgba(255,255,255,0.4);font-size:22px;cursor:pointer;line-height:1;padding:0 4px">&times;</button>
+        <button type="button" class="modal-close-x" data-action="hide-custom">&times;</button>
       </div>
-      <div style="font-size:12px;color:rgba(255,255,255,0.35);margin-bottom:14px;line-height:1.5">
+      <div class="custom-disclaimer-hint">
         Tambahkan pertanyaan atau tantangan buatan kamu sendiri. Akan muncul secara acak saat game berlangsung.<br>
-        Gunakan <span style="color:#f9a8d4;font-weight:700">{AKU}</span> dan <span
-          style="color:#fdba74;font-weight:700">{KAMU}</span> untuk nama pemain.
+        Gunakan <span class="hint-aku">{AKU}</span> dan <span class="hint-kamu">{KAMU}</span> untuk nama pemain.
       </div>
+      <p class="custom-legal">Isi tantangan kustom sepenuhnya tanggung jawab pemain — tidak diverifikasi oleh aplikasi.</p>
       <div class="custom-tabs">
-        <button class="custom-tab truth-tab active" id="ctab-truth" onclick="setCustomTab('truth')">🤫 TRUTH</button>
-        <button class="custom-tab dare-tab" id="ctab-dare" onclick="setCustomTab('dare')">🔥 DARE</button>
+        <button type="button" class="custom-tab truth-tab active" id="ctab-truth" data-action="set-custom-tab" data-tab="truth">🤫 TRUTH</button>
+        <button type="button" class="custom-tab dare-tab" id="ctab-dare" data-action="set-custom-tab" data-tab="dare">🔥 DARE</button>
       </div>
       <div class="custom-input-row">
         <input class="custom-input" id="custom-input" placeholder="Tulis tantangan kamu..." maxlength="160" />
-        <button class="btn-custom-add" onclick="addCustomTantangan()">+</button>
+        <button type="button" class="btn-custom-add" data-action="add-custom">+</button>
       </div>
       <div class="custom-list" id="custom-list" style="max-height:280px;overflow-y:auto;"></div>
-      <button onclick="hideCustomOverlay()"
-        style="margin-top:16px;width:100%;padding:12px;background:linear-gradient(135deg,#a855f7,#6366f1);border:none;border-radius:16px;color:white;font-weight:900;font-size:15px;cursor:pointer;font-family:'Nunito',sans-serif">
+      <button type="button" class="btn-custom-save" data-action="hide-custom">
         Simpan & Tutup ✓
       </button>
     </div>

@@ -123,7 +123,11 @@ input, textarea { -webkit-user-select: text; user-select: text; }
     box-shadow: 0 6px 28px rgba(244,63,94,0.45);
     transition: all .2s; letter-spacing: .5px;
   }
-  .btn-start:hover { transform: translateY(-2px); box-shadow: 0 10px 36px rgba(244,63,94,0.55); }
+  .btn-start:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 10px 36px rgba(244,63,94,0.55); }
+  .btn-start:disabled {
+    opacity: 0.45; cursor: not-allowed; filter: grayscale(0.2);
+    box-shadow: none;
+  }
 
   /* ── PLAYER CARDS ── */
   .player-cards {
@@ -957,3 +961,84 @@ input, textarea { -webkit-user-select: text; user-select: text; }
   .pion-option.selected-1 { border-color: var(--p1); background: rgba(251,146,60,0.12); }
   .pion-option svg, .pion-option > div { pointer-events: none; }
   .pion-label { font-size: 10px; color: rgba(255,255,255,0.45); font-weight: 700; text-align: center; }
+
+  /* ── Consent & secondary buttons (name screen) ── */
+  .consent-panel {
+    width: 100%; max-width: 420px;
+    display: flex; flex-direction: column; gap: 12px;
+    margin-bottom: 18px; text-align: left;
+  }
+  .consent-label {
+    display: flex; align-items: flex-start; gap: 10px;
+    font-size: 12px; line-height: 1.55; color: rgba(226,232,240,0.92);
+    cursor: pointer; font-weight: 600;
+  }
+  .consent-label input { margin-top: 3px; accent-color: #f43f5e; flex-shrink: 0; }
+  .santai-label { color: rgba(52,211,153,0.95); }
+  .btn-secondary-rose {
+    background: rgba(244,63,94,0.1); border: 1px solid rgba(244,63,94,0.3);
+    border-radius: 20px; padding: 8px 20px; color: #f9a8d4; cursor: pointer;
+    font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 13px;
+    margin-bottom: 18px; transition: background 0.2s; letter-spacing: 0.5px;
+  }
+  .btn-secondary-rose:hover { background: rgba(244,63,94,0.2); }
+  .btn-secondary-violet {
+    background: rgba(168,85,247,0.1); border: 1px solid rgba(168,85,247,0.3);
+    border-radius: 20px; padding: 8px 20px; color: #c4b5fd; cursor: pointer;
+    font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 13px;
+    margin-bottom: 18px; transition: background 0.2s; letter-spacing: 0.5px;
+  }
+  .btn-secondary-violet:hover { background: rgba(168,85,247,0.2); }
+  .custom-count-lbl { opacity: 0.6; }
+  .btn-stats-flex { flex: 1; }
+  .btn-mute-ic {
+    padding: 8px 10px; background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.09); border-radius: 20px;
+    color: #aaa; cursor: pointer; font-size: 14px; transition: all 0.2s;
+    font-family: 'Nunito', sans-serif; flex-shrink: 0;
+  }
+  .btn-timer-start {
+    background: linear-gradient(135deg,#10b981,#059669); border: none; border-radius: 10px;
+    color: white; font-weight: 900; font-size: 11px; padding: 5px 10px; cursor: pointer;
+    font-family: 'Nunito', sans-serif; transition: all 0.2s;
+  }
+  .btn-timer-skip {
+    background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 10px; color: rgba(255,255,255,0.5); font-weight: 700; font-size: 11px;
+    padding: 5px 10px; cursor: pointer; font-family: 'Nunito', sans-serif; transition: all 0.2s;
+  }
+  .winner-btn-mt0 { margin-top: 0; }
+  .winner-btn-mode {
+    background: linear-gradient(135deg,#a855f7,#6366f1);
+    box-shadow: 0 6px 28px rgba(168,85,247,0.45);
+  }
+  .modal-close-x {
+    background: none; border: none; color: rgba(255,255,255,0.4);
+    font-size: 22px; cursor: pointer; line-height: 1; padding: 0 4px;
+  }
+  .btn-rules-ok {
+    margin-top: 20px; width: 100%; padding: 12px;
+    background: linear-gradient(135deg,#f43f5e,#fb923c); border: none; border-radius: 16px;
+    color: white; font-weight: 900; font-size: 15px; cursor: pointer;
+    font-family: 'Nunito', sans-serif;
+  }
+  .custom-disclaimer-hint {
+    font-size: 12px; color: rgba(255,255,255,0.35); margin-bottom: 10px; line-height: 1.5;
+  }
+  .hint-aku { color: #f9a8d4; font-weight: 700; }
+  .hint-kamu { color: #fdba74; font-weight: 700; }
+  .custom-legal {
+    font-size: 11px; color: rgba(255,255,255,0.28); line-height: 1.45;
+    margin-bottom: 12px; font-style: italic;
+  }
+  .btn-custom-save {
+    margin-top: 16px; width: 100%; padding: 12px;
+    background: linear-gradient(135deg,#a855f7,#6366f1); border: none; border-radius: 16px;
+    color: white; font-weight: 900; font-size: 15px; cursor: pointer;
+    font-family: 'Nunito', sans-serif;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .heart-float { animation: none !important; opacity: 0.25; }
+    h1 { animation: none !important; }
+  }
