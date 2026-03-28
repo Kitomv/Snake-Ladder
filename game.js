@@ -1390,7 +1390,7 @@ function showDuoChallenge(sq, level) {
     <div class="tod-challenge" style="font-size:15px;line-height:1.7">${challenge}</div>
     <div class="tod-action-btns">
       <button class="btn-done" onclick="todDone(true)">✅ Selesai!</button>
-      <button class="btn-skip" onclick="todDone(false)">❌ Skip (−3)</button>
+      <button class="btn-skip" onclick="trySkip()">❌ Skip (−3)</button>
     </div>
     <div class="tod-rule">Tantangan untuk kalian berdua! 💕</div>`;
 }
@@ -1465,7 +1465,7 @@ function renderChallenge(type, sq, level) {
             <div class="tod-challenge" style="font-size:15px;line-height:1.7">${challenge}</div>
             <div class="tod-action-btns">
               <button class="btn-done" onclick="todDone(true)">✅ Selesai!</button>
-              <button class="btn-skip" onclick="todDone(false)">❌ Skip (−3)</button>
+              <button class="btn-skip" onclick="trySkip()">❌ Skip (−3)</button>
             </div>
             <div class="tod-rule">Jawab jujur ya... 👀</div>`;
           return;
@@ -1501,7 +1501,7 @@ function renderChallenge(type, sq, level) {
             <div class="tod-challenge" style="font-size:15px;line-height:1.7">${challenge}</div>
             <div class="tod-action-btns">
               <button class="btn-done" onclick="todDone(true)">✅ Selesai!</button>
-              <button class="btn-skip" onclick="todDone(false)">❌ Skip (−3)</button>
+              <button class="btn-skip" onclick="trySkip()">❌ Skip (−3)</button>
             </div>
             <div class="tod-rule">Berani lakukan ini? 🔥</div>`;
           return;
@@ -2262,7 +2262,7 @@ function showBeraniChallenge(sq, level) {
     <div class="tod-challenge" style="font-size:15px;line-height:1.7">${challenge}</div>
     <div class="tod-action-btns">
       <button class="btn-done" onclick="todDone(true)">✅ Selesai!</button>
-      <button class="btn-skip" onclick="todDone(false)" style="opacity:0.6;font-size:12px">⚠️ Tidak Berani (−5)</button>
+      <button class="btn-skip" onclick="trySkip()" style="opacity:0.6;font-size:12px">⚠️ Tidak Berani (−5)</button>
     </div>
     <div class="tod-rule" style="color:#fb923c">Kartu Berani — skip mundur 5 kotak! 💪</div>`;
 }
