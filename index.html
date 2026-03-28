@@ -156,6 +156,7 @@
         <span style="font-size:10px;opacity:.7">durasi main</span>
       </div>
 
+      <div class="game-log-hint">Baris bertanda 📋 bisa diketuk untuk lihat kartu lagi</div>
       <div class="game-log" id="game-log">
         <div class="log-entry">💕 Game dimulai!</div>
       </div>
@@ -167,6 +168,21 @@
         <button type="button" id="btn-mute" data-action="toggle-mute" title="Toggle suara" class="btn-mute-ic">🔊</button>
       </div>
       <button type="button" class="btn-reset" data-action="go-mood">🚪 Ganti Mode</button>
+    </div>
+  </div>
+
+  <!-- ── TOD REVIEW (dari log) ── -->
+  <div id="tod-review-overlay">
+    <div class="tod-review-card">
+      <div class="tod-review-head">
+        <div>
+          <div class="tod-review-title" id="tod-review-title"></div>
+          <div class="tod-review-meta" id="tod-review-meta"></div>
+        </div>
+        <button type="button" class="modal-close-x" data-action="close-tod-review">&times;</button>
+      </div>
+      <div class="tod-review-body-wrap" id="tod-review-body"></div>
+      <div class="tod-review-foot">Ini salinan kartu saat itu — tombol tidak aktif.</div>
     </div>
   </div>
 
@@ -274,7 +290,7 @@
             style="color:#fcd34d">setelah</em> tantangan diselesaikan.</li>
         <li style="color:#e2e8f0;font-size:13px;line-height:1.5">✅ Selesaikan = tetap di kotak. ❌ Skip = mundur 3 kotak.
         </li>
-        <li style="color:#e2e8f0;font-size:13px;line-height:1.5">Tidak boleh skip lebih dari 2 kali berturut-turut.</li>
+        <li style="color:#e2e8f0;font-size:13px;line-height:1.5">Lewati skip ke-3 berturut-turut = <strong style="color:#f87171">hukuman</strong> mundur <strong style="color:#f43f5e">7 kotak</strong> (Dare/Truth biasa) atau <strong style="color:#fb923c">10 kotak</strong> (Kartu Berani).</li>
         <li style="color:#e2e8f0;font-size:13px;line-height:1.5">⏱️ <strong style="color:#10b981">Dare punya
             timer</strong> — muncul otomatis sesuai durasi di tantangan. Tekan ▶ Mulai untuk memulai.</li>
         <li style="color:#e2e8f0;font-size:13px;line-height:1.5">Dadu 6 = giliran tambahan setelah tantangan selesai! 🎲

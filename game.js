@@ -214,6 +214,10 @@ const SPECIAL_CELLS = {
   10: 'berani', 22: 'berani', 35: 'berani', 48: 'berani', 52: 'berani', 68: 'berani', 76: 'berani', 88: 'berani', 96: 'berani',
 };
 
+/** Skip ke-3+ berturut-turut: hukuman mundur (lebih berat dari skip biasa) */
+const SKIP_OVER_LIMIT_PENALTY = 7;
+const SKIP_OVER_LIMIT_PENALTY_BERANI = 10;
+
 // Content loaded from challenges.json via window.CHALLENGES
 
 // ─── GAME STATE ──────────────────────────────────────────────────
@@ -240,6 +244,12 @@ let pendDice = 0;
 let rolling = false;
 let skipStreak = [0, 0];
 let jokerCount = [0, 0];
+
+/** Riwayat kartu TOD untuk review dari log (id monoton, array dibatasi) */
+let todReviewIdSeq = 0;
+let todReviewSnapshots = [];
+const TOD_REVIEW_MAX = 50;
+const GAME_LOG_MAX_ENTRIES = 48;
 
 // GS helper - read-only snapshot for debugging
 function getGameState() {
@@ -406,6 +416,7 @@ function startGame() {
   document.getElementById('mood-badge-bar').innerHTML =
     `<span style="background:${m.color}22;border:1px solid ${m.color}55;padding:3px 12px;border-radius:20px;color:${m.color};font-weight:800;font-size:11px">${m.emoji} Mode ${m.label}</span>`;
 
+  resetTodReviewHistory();
   addLog(`💕 ${n0} vs ${n1} — Mulai! (${m.emoji} ${m.label})`);
   stats = [
     {
@@ -507,6 +518,26 @@ function initInputListeners() {
   applySantaiModeUI();
   const dw = document.getElementById('dice-wrap');
   if (dw) dw.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); rollDice(); } });
+  const glog = document.getElementById('game-log');
+  if (glog) {
+    glog.addEventListener('click', (e) => {
+      const row = e.target.closest('.log-entry-review');
+      if (!row || row.dataset.reviewId == null) return;
+      const id = +row.dataset.reviewId;
+      const snap = todReviewSnapshots.find(s => s.id === id);
+      if (!snap) {
+        showStreakToast('Kartu itu sudah tidak ada di memori');
+        return;
+      }
+      showTodReviewOverlay(snap);
+    });
+  }
+  const revOv = document.getElementById('tod-review-overlay');
+  if (revOv) {
+    revOv.addEventListener('click', (e) => {
+      if (e.target === revOv) hideTodReviewOverlay();
+    });
+  }
   initPionPickers();
 }
 
@@ -602,6 +633,9 @@ function initActionDelegation() {
         break;
       case 'close-recap':
         document.getElementById('recap-overlay').classList.remove('show');
+        break;
+      case 'close-tod-review':
+        hideTodReviewOverlay();
         break;
       default:
         break;
@@ -1475,7 +1509,11 @@ function showTOD(sq) {
   }
 
   const skipWarn = document.getElementById('skip-warning');
-  if (skipStreak[turn] >= 1) {
+  if (skipStreak[turn] >= 2) {
+    const hp = currentTodType === 'berani' ? SKIP_OVER_LIMIT_PENALTY_BERANI : SKIP_OVER_LIMIT_PENALTY;
+    skipWarn.textContent = `⚠️ Skip lagi = HUKUMAN ${hp} kotak mundur!`;
+    skipWarn.classList.add('show');
+  } else if (skipStreak[turn] >= 1) {
     skipWarn.textContent = `⚠️ Skip ke-${skipStreak[turn] + 1} dari 2 — hati-hati!`;
     skipWarn.classList.add('show');
   } else {
@@ -1497,7 +1535,6 @@ function showJokerCell(sq, level) {
   jokerCount[turn]++;
   sfx.jokerGet();
   updateUI();
-  addLog(`🃏 ${PLAYERS[turn].name} dapat Joker Token! Total: ${jokerCount[turn]}`);
   document.getElementById('btn-joker').classList.remove('visible');
   stopTimer(); // no timer for joker cells
   document.getElementById('tod-body').innerHTML = `
@@ -1513,6 +1550,7 @@ function showJokerCell(sq, level) {
     <div class="tod-action-btns" style="grid-template-columns:1fr">
       <button type="button" class="btn-done" data-action="tod-done" data-completed="true">✅ Sip, lanjut!</button>
     </div>`;
+  registerTodReviewSnapshot(sq, '🃏 JOKER');
 }
 
 function showDuoChallenge(sq, level) {
@@ -1540,6 +1578,7 @@ function showDuoChallenge(sq, level) {
       <button type="button" class="btn-skip" data-action="try-skip">❌ Skip (−3)</button>
     </div>
     <div class="tod-rule">Tantangan untuk kalian berdua! 💕</div>`;
+  registerTodReviewSnapshot(sq, '⚡ Duo');
 }
 
 function showWildChoice(sq, level) {
@@ -1573,6 +1612,7 @@ function showWildChoice(sq, level) {
         <span style="font-size:11px;opacity:.8">Berani kan?</span>
       </button>
     </div>`;
+  registerTodReviewSnapshot(sq, '🎯 Wild');
 }
 
 function resolveWild(type, sq, level) {
@@ -1615,6 +1655,7 @@ function renderChallenge(type, sq, level) {
               <button type="button" class="btn-skip" data-action="try-skip">❌ Skip (−3)</button>
             </div>
             <div class="tod-rule">Jawab jujur ya... 👀</div>`;
+          registerTodReviewSnapshot(sq, '🤫 Truth ✏️');
           return;
         }
       }
@@ -1651,6 +1692,7 @@ function renderChallenge(type, sq, level) {
               <button type="button" class="btn-skip" data-action="try-skip">❌ Skip (−3)</button>
             </div>
             <div class="tod-rule">Berani lakukan ini? 🔥</div>`;
+          registerTodReviewSnapshot(sq, '🔥 Dare ✏️');
           return;
         }
       }
@@ -1690,6 +1732,7 @@ function renderChallenge(type, sq, level) {
       <button type="button" class="btn-skip" data-action="tod-done" data-completed="false">❌ Skip (−3)</button>
     </div>
     <div class="tod-rule">${isT ? 'Jawab jujur ya... 👀' : 'Berani lakukan ini? 🔥'}</div>`;
+  registerTodReviewSnapshot(sq, isT ? '🤫 Truth' : '🔥 Dare');
 }
 
 function useJoker() {
@@ -1719,13 +1762,19 @@ function todDone(completed) {
 function trySkip() {
   if (skipStreak[turn] >= 1) {
     // Show inline confirmation inside the card
-    const penalty = currentTodType === 'berani' ? 5 : 3;
+    const isOverLimitSkip = skipStreak[turn] >= 2;
+    const penalty = isOverLimitSkip
+      ? (currentTodType === 'berani' ? SKIP_OVER_LIMIT_PENALTY_BERANI : SKIP_OVER_LIMIT_PENALTY)
+      : (currentTodType === 'berani' ? 5 : 3);
+    const skipHint = isOverLimitSkip
+      ? `Ini <strong style="color:#f87171">skip ke-3</strong> — melebihi batas! Hukuman: mundur <strong style="color:#f43f5e">${penalty} kotak</strong>.`
+      : `Ini skip ke-${skipStreak[turn] + 1} dari 2 — kamu mundur <strong style="color:#f43f5e">${penalty} kotak</strong>!`;
     window._todPrevBodyForSkip = document.getElementById('tod-body').innerHTML;
     document.getElementById('tod-body').innerHTML = `
       <div style="text-align:center;padding:16px 4px">
         <div style="font-size:36px;margin-bottom:10px">⚠️</div>
         <div style="font-family:'Playfair Display',serif;font-size:16px;color:#fca5a5;margin-bottom:6px">Yakin mau skip?</div>
-        <div style="font-size:13px;color:rgba(255,255,255,0.5);margin-bottom:20px">Ini skip ke-${skipStreak[turn] + 1} dari 2 — kamu mundur <strong style="color:#f43f5e">${penalty} kotak</strong>!</div>
+        <div style="font-size:13px;color:rgba(255,255,255,0.5);margin-bottom:20px">${skipHint}</div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
           <button type="button" class="btn-skip" data-action="tod-done" data-completed="false" style="background:linear-gradient(135deg,#f43f5e,#dc2626);color:white;font-weight:900;border:none">
             ✅ Ya, Skip!
@@ -1809,8 +1858,11 @@ function resolveAfterTOD(completed, isJoker) {
     skipStreak[turn]++;
     if (skipStreak[turn] > 2) {
       skipStreak[turn] = 0;
-      afterPos = pendAfter;
-      addLog(`🚫 Skip limit! ${PLAYERS[turn].name} harus selesaikan — lanjut ke ${afterPos}`);
+      const overP = currentTodType === 'berani' ? SKIP_OVER_LIMIT_PENALTY_BERANI : SKIP_OVER_LIMIT_PENALTY;
+      afterPos = Math.max(1, pendRaw - overP);
+      addLog(`🔥 Hukuman skip berlebihan! ${PLAYERS[turn].name} mundur ${overP} kotak → kotak ${afterPos}`);
+      sfx.snake();
+      vib([90, 40, 90, 40, 100, 40, 150]);
     } else {
       const penalty = currentTodType === 'berani' ? 5 : 3;
       afterPos = Math.max(1, pendRaw - penalty);
@@ -1892,8 +1944,10 @@ function goToMoodScreen() {
     { done: 0, skipped: 0, truths: 0, dares: 0, duos: 0, wilds: 0, jokerUsed: 0, snakeHits: 0, ladderHits: 0, bonusTurns: 0, maxStreak: 0, curStreak: 0 },
   ];
   totalRounds = 0;
+  hideTodReviewOverlay();
+  resetTodReviewHistory();
   // Hide overlays
-  ['winner-overlay', 'recap-overlay', 'tod-overlay', 'stats-overlay'].forEach(id => {
+  ['winner-overlay', 'recap-overlay', 'tod-overlay', 'stats-overlay', 'tod-review-overlay'].forEach(id => {
     document.getElementById(id).classList.remove('show');
   });
   // Reset mood UI
@@ -1944,6 +1998,7 @@ function confirmReset() {
   document.getElementById('recap-overlay').classList.remove('show');
   document.getElementById('tod-overlay').classList.remove('show');
   document.getElementById('mood-badge-bar').innerHTML = '';
+  resetTodReviewHistory();
   document.getElementById('game-log').innerHTML = `<div class="log-entry">💕 Game direset!</div>`;
   buildBoard();
   drawSnakesLadders();
@@ -2042,12 +2097,70 @@ function showStats() {
   document.getElementById('stats-overlay').classList.add('show');
 }
 
-function addLog(msg) {
+function resetTodReviewHistory() {
+  todReviewSnapshots = [];
+  todReviewIdSeq = 0;
+}
+
+function stripInteractiveFromTodBodyHtml(html) {
+  const tmp = document.createElement('div');
+  tmp.innerHTML = html;
+  tmp.querySelectorAll('button, .tod-action-btns').forEach(el => el.remove());
+  tmp.querySelectorAll('div').forEach(div => {
+    if (div.children.length === 0 && !div.textContent.trim()) div.remove();
+  });
+  return tmp.innerHTML;
+}
+
+/** Simpan isi #tod-body (tanpa tombol) dan tambah baris log yang bisa diketuk */
+function registerTodReviewSnapshot(sq, label) {
+  const body = document.getElementById('tod-body');
+  if (!body) return;
+  const raw = body.innerHTML;
+  if (!raw.trim()) return;
+  const bodyHtml = stripInteractiveFromTodBodyHtml(raw);
+  if (!bodyHtml.replace(/<[^>]+>/g, '').trim()) return;
+  const id = ++todReviewIdSeq;
+  const levelEl = document.getElementById('level-label');
+  todReviewSnapshots.push({
+    id,
+    sq,
+    label,
+    playerName: PLAYERS[turn].name,
+    playerColor: PLAYERS[turn].colorHex,
+    bodyHtml,
+    levelText: levelEl ? levelEl.innerText.replace(/\s+/g, ' ').trim() : '',
+  });
+  while (todReviewSnapshots.length > TOD_REVIEW_MAX) todReviewSnapshots.shift();
+  addLog(`📋 ${label} · kotak ${sq} · ${PLAYERS[turn].name}`, id);
+}
+
+function showTodReviewOverlay(snap) {
+  const ov = document.getElementById('tod-review-overlay');
+  if (!ov || !snap) return;
+  document.getElementById('tod-review-title').textContent = `${snap.label} · Kotak ${snap.sq}`;
+  document.getElementById('tod-review-meta').textContent =
+    `${snap.playerName}${snap.levelText ? ' · ' + snap.levelText : ''}`;
+  document.getElementById('tod-review-body').innerHTML = snap.bodyHtml;
+  ov.classList.add('show');
+}
+
+function hideTodReviewOverlay() {
+  const ov = document.getElementById('tod-review-overlay');
+  if (ov) ov.classList.remove('show');
+}
+
+function addLog(msg, reviewId) {
   const log = document.getElementById('game-log');
   const d = document.createElement('div');
-  d.className = 'log-entry'; d.textContent = msg;
+  d.className = 'log-entry' + (reviewId != null ? ' log-entry-review' : '');
+  d.textContent = msg;
+  if (reviewId != null) {
+    d.dataset.reviewId = String(reviewId);
+    d.title = 'Ketuk untuk lihat kartu lagi';
+  }
   log.insertBefore(d, log.firstChild);
-  while (log.children.length > 5) log.removeChild(log.lastChild);
+  while (log.children.length > GAME_LOG_MAX_ENTRIES) log.removeChild(log.lastChild);
 }
 
 // ─── RECAP CARD (Canvas 2D — downloadable PNG) ───────────────────
@@ -2415,6 +2528,7 @@ function showBeraniChallenge(sq, level) {
       <button type="button" class="btn-skip" data-action="try-skip" style="opacity:0.6;font-size:12px">⚠️ Tidak Berani (−5)</button>
     </div>
     <div class="tod-rule" style="color:#fb923c">Kartu Berani — skip mundur 5 kotak! 💪</div>`;
+  registerTodReviewSnapshot(sq, '💪 Berani');
 }
 
 // ─── BACKGROUND MUSIC ENGINE (Web Audio API) ─────────────────────
@@ -2668,6 +2782,8 @@ window.addEventListener('load', () => {
 
 document.addEventListener('keydown', (e) => {
   if (e.key !== 'Escape') return;
+  const trev = document.getElementById('tod-review-overlay');
+  if (trev && trev.classList.contains('show')) { hideTodReviewOverlay(); e.preventDefault(); return; }
   const rules = document.getElementById('rules-overlay');
   const custom = document.getElementById('custom-overlay');
   const stats = document.getElementById('stats-overlay');
@@ -2779,6 +2895,8 @@ function resumeGame() {
   const banner = document.getElementById('resume-banner');
   if (banner) banner.remove();
   if (!loadGame()) return;
+  hideTodReviewOverlay();
+  resetTodReviewHistory();
   // Apply colors
   document.documentElement.style.setProperty('--p0', PLAYERS[0].colorHex);
   document.documentElement.style.setProperty('--p1', PLAYERS[1].colorHex);

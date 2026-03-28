@@ -380,13 +380,67 @@ input, textarea { -webkit-user-select: text; user-select: text; }
   .joker-token.has:hover { background: rgba(252,211,77,0.35); transform: scale(1.05); }
   .joker-token.empty { opacity: 0.35; }
 
+  .game-log-hint {
+    font-size: 10px; color: rgba(255,255,255,0.35); width: 100%;
+    margin-bottom: 5px; line-height: 1.35;
+  }
   .game-log {
     background: var(--card); border: 1px solid var(--border);
     border-radius: 10px; padding: 10px;
     font-size: 11px; line-height: 1.9;
-    color: #999; width: 100%; max-height: 110px; overflow: hidden;
+    color: #999; width: 100%; max-height: 110px; overflow-y: auto;
   }
   .log-entry:first-child { color: #eee; }
+  .log-entry-review {
+    cursor: pointer;
+    border-radius: 6px;
+    padding: 2px 4px;
+    margin: 0 -4px;
+    border-left: 3px solid rgba(244,63,94,0.55);
+    transition: background 0.15s ease;
+  }
+  .log-entry-review:hover { background: rgba(244,63,94,0.12); color: #e2e8f0; }
+
+  /* ── TOD REVIEW (read-only dari log) ── */
+  #tod-review-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.88); z-index: 110;
+    align-items: center; justify-content: center; padding: 16px;
+  }
+  #tod-review-overlay.show { display: flex; }
+  .tod-review-card {
+    background: linear-gradient(160deg, #1a0f18, #2a0f1e);
+    border: 2px solid rgba(244,63,94,0.45); border-radius: 22px;
+    padding: 18px 18px 14px; max-width: 440px; width: 100%;
+    max-height: 85vh; overflow: hidden;
+    display: flex; flex-direction: column;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.55);
+  }
+  .tod-review-head {
+    display: flex; align-items: flex-start; justify-content: space-between;
+    gap: 10px; margin-bottom: 12px;
+  }
+  .tod-review-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 15px; font-weight: 700; color: #f9a8d4;
+  }
+  .tod-review-meta {
+    font-size: 11px; color: rgba(255,255,255,0.45); margin-top: 4px;
+    font-weight: 600;
+  }
+  .tod-review-body-wrap {
+    overflow-y: auto; flex: 1;
+    padding: 10px 6px; border-radius: 14px;
+    background: rgba(0,0,0,0.22);
+    border: 1px solid rgba(255,255,255,0.06);
+  }
+  .tod-review-body-wrap .tod-challenge {
+    font-size: 15px; text-align: center;
+  }
+  .tod-review-foot {
+    margin-top: 10px; font-size: 10px; color: rgba(255,255,255,0.28);
+    text-align: center;
+  }
 
   .btn-reset {
     width: 100%; padding: 8px 0;
