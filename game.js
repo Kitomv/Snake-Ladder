@@ -321,7 +321,6 @@ let totalRounds = 0;
 
 // ─── MOOD SELECTOR ───────────────────────────────────────────────
 function selectMood(mood) {
-  if (santaiOnlyMode && mood === 'liar') return;
   currentMood = mood;
   ['romantis', 'playful', 'liar'].forEach(m => {
     const el = document.getElementById(`mood-${m}`);
@@ -330,18 +329,7 @@ function selectMood(mood) {
 }
 
 function applySantaiModeUI() {
-  const liarBtn = document.getElementById('mood-liar');
-  const ns = document.getElementById('name-screen');
-  if (!liarBtn) return;
-  if (santaiOnlyMode) {
-    liarBtn.style.display = 'none';
-    liarBtn.classList.remove('active');
-    if (currentMood === 'liar') selectMood('playful');
-    if (ns) ns.classList.add('santai-on');
-  } else {
-    liarBtn.style.display = '';
-    if (ns) ns.classList.remove('santai-on');
-  }
+  // Mode santai removed — Liar mode always available
 }
 
 // ─── GAME DURATION TIMER ─────────────────────────────────────────
@@ -393,7 +381,6 @@ function formatDuration(sec) {
 
 // ─── NAME SCREEN ─────────────────────────────────────────────────
 function startGame() {
-  if (santaiOnlyMode && currentMood === 'liar') selectMood('playful');
   let n0 = document.getElementById('name0').value.trim() || 'Kamu';
   let n1 = document.getElementById('name1').value.trim() || 'Dia';
   // Enhancement: prevent identical names
@@ -503,14 +490,6 @@ function initPionPickers() {
 function initInputListeners() {
   document.getElementById('name0').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('name1').focus(); });
   document.getElementById('name1').addEventListener('keydown', e => { if (e.key === 'Enter') startGame(); });
-  const santaiEl = document.getElementById('santai-only');
-  if (santaiEl) {
-    santaiOnlyMode = santaiEl.checked;
-    santaiEl.addEventListener('change', () => {
-      santaiOnlyMode = santaiEl.checked;
-      applySantaiModeUI();
-    });
-  }
   applySantaiModeUI();
   const dw = document.getElementById('dice-wrap');
   if (dw) dw.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); rollDice(); } });
@@ -1974,8 +1953,6 @@ function goToMoodScreen() {
   if (mb) mb.classList.add('active');
   // Show name screen
   document.getElementById('name-screen').style.display = 'flex';
-  const santaiEl = document.getElementById('santai-only');
-  if (santaiEl) santaiEl.checked = santaiOnlyMode;
   applySantaiModeUI();
   initPionPickers();
   document.getElementById('mood-badge-bar').innerHTML = '';
@@ -2867,13 +2844,6 @@ function loadGame() {
     santaiOnlyMode = !!d.santaiOnlyMode;
     currentTodType = d.currentTodType ?? null;
     gameDurationSec = d.gameDurationSec ?? 0;
-    if (santaiOnlyMode && currentMood === 'liar') currentMood = 'playful';
-    if (santaiOnlyMode && d.CELL_TYPE) {
-      for (let i = 1; i <= 100; i++) {
-        if (d.CELL_TYPE[i] === 'berani') d.CELL_TYPE[i] = 'dare';
-      }
-    }
-    if (santaiOnlyMode && currentTodType === 'berani') currentTodType = 'dare';
     d.players.forEach((p, i) => { PLAYERS[i].name = p.name; PLAYERS[i].colorHex = p.colorHex; });
     stats = d.stats;
     usedTruth = d.usedTruth; usedDare = d.usedDare;
