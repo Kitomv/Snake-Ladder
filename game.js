@@ -321,7 +321,7 @@ let totalRounds = 0;
 
 // ─── MOOD SELECTOR ───────────────────────────────────────────────
 function selectMood(mood) {
-  currentMood = mood;
+    currentMood = mood;
   ['romantis', 'playful', 'liar'].forEach(m => {
     const el = document.getElementById(`mood-${m}`);
     if (el) el.classList.toggle('active', m === mood);
@@ -1090,23 +1090,23 @@ function animateSnakeLadder(playerIdx, from, to, callback) {
   const isSnake = to < from;
   const dur = isSnake ? 750 : 680;
 
-  // Enhancement 4: flash overlay helper
-  function flashOverlay(type) {
-    let overlay = document.getElementById('flash-overlay');
-    if (!overlay) {
-      overlay = document.createElement('div');
-      overlay.id = 'flash-overlay';
-      overlay.style.cssText = 'position:fixed;inset:0;pointer-events:none;z-index:50;opacity:0;transition:opacity 0.15s ease';
-      document.body.appendChild(overlay);
-    }
-    if (type === 'snake') {
-      overlay.style.background = 'radial-gradient(ellipse at center, rgba(244,63,94,0.55) 0%, transparent 70%)';
-    } else {
-      overlay.style.background = 'radial-gradient(ellipse at center, rgba(252,211,77,0.45) 0%, transparent 70%)';
-    }
-    overlay.style.opacity = '1';
-    setTimeout(() => { overlay.style.opacity = '0'; }, 500);
+// Enhancement 4: flash overlay helper
+function flashOverlay(type) {
+  let overlay = document.getElementById('flash-overlay');
+  if (!overlay) {
+    overlay = document.createElement('div');
+    overlay.id = 'flash-overlay';
+    overlay.style.cssText = 'position:fixed;inset:0;pointer-events:none;z-index:50;opacity:0;transition:opacity 0.15s ease';
+    document.body.appendChild(overlay);
   }
+  if (type === 'snake') {
+    overlay.style.background = 'radial-gradient(ellipse at center, rgba(244,63,94,0.55) 0%, transparent 70%)';
+  } else {
+    overlay.style.background = 'radial-gradient(ellipse at center, rgba(252,211,77,0.45) 0%, transparent 70%)';
+  }
+  overlay.style.opacity = '1';
+  setTimeout(() => { overlay.style.opacity = '0'; }, 500);
+}
 
   if (isSnake) {
     sfx.snake(); vib([80, 40, 80]);
@@ -1497,7 +1497,7 @@ function showTOD(sq) {
   setLevelUI(level);
 
   const jokerBtn = document.getElementById('btn-joker');
-  if (jokerCount[turn] > 0 && type !== 'joker') {
+  if (jokerCount[turn] > 0 && type !== 'joker' && type !== 'berani') {
     jokerBtn.classList.add('visible');
     jokerBtn.textContent = `🃏 Joker: Skip Gratis + Imun Ular! (${jokerCount[turn]}x)`;
   } else {
@@ -1505,7 +1505,9 @@ function showTOD(sq) {
   }
 
   const skipWarn = document.getElementById('skip-warning');
-  if (skipStreak[turn] >= 2) {
+  if (type === 'berani') {
+    skipWarn.classList.remove('show'); // no skip warning for berani — can't skip at all
+  } else if (skipStreak[turn] >= 2) {
     const hp = currentTodType === 'berani' ? SKIP_OVER_LIMIT_PENALTY_BERANI : SKIP_OVER_LIMIT_PENALTY;
     skipWarn.textContent = `⚠️ Skip lagi = HUKUMAN ${hp} kotak mundur!`;
     skipWarn.classList.add('show');
@@ -1733,6 +1735,11 @@ function renderChallenge(type, sq, level) {
 
 function useJoker() {
   if (jokerCount[turn] <= 0) return;
+  // Joker tidak berlaku untuk Kartu Berani
+  if (currentTodType === 'berani') {
+    showStreakToast('🃏 Joker tidak berlaku untuk Kartu Berani!');
+    return;
+  }
   jokerCount[turn]--;
   sfx.joker();
   addLog(`🃏 ${PLAYERS[turn].name} pakai Joker! Skip gratis + imun ular aktif! (sisa: ${jokerCount[turn]})`);
@@ -1756,6 +1763,11 @@ function todDone(completed) {
 
 // Enhancement 3: skip ke-2 butuh konfirmasi inline
 function trySkip() {
+  // Kartu Berani wajib dilakukan — tidak bisa di-skip
+  if (currentTodType === 'berani') {
+    showStreakToast('💪 Kartu Berani wajib dilakukan!');
+    return;
+  }
   if (skipStreak[turn] >= 1) {
     // Show inline confirmation inside the card
     const isOverLimitSkip = skipStreak[turn] >= 2;
@@ -2519,9 +2531,8 @@ function showBeraniChallenge(sq, level) {
     <div class="tod-challenge" style="font-size:15px;line-height:1.7">${challenge}</div>
     <div class="tod-action-btns">
       <button type="button" class="btn-done" data-action="tod-done" data-completed="true">✅ Selesai!</button>
-      <button type="button" class="btn-skip" data-action="try-skip" style="opacity:0.6;font-size:12px">⚠️ Tidak Berani (−5)</button>
     </div>
-    <div class="tod-rule" style="color:#fb923c">Kartu Berani — skip mundur 5 kotak! 💪</div>`;
+    <div class="tod-rule" style="color:#fb923c">Kartu Berani — wajib dilakukan, tidak bisa di-skip! 💪</div>`;
   registerTodReviewSnapshot(sq, '💪 Berani');
 }
 
