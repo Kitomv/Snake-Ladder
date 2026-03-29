@@ -393,11 +393,6 @@ function formatDuration(sec) {
 
 // ─── NAME SCREEN ─────────────────────────────────────────────────
 function startGame() {
-  const consent = document.getElementById('consent-17');
-  if (!consent || !consent.checked) {
-    showStreakToast('⚠️ Centang persetujuan usia & konsensualitas dulu ya 💕');
-    return;
-  }
   if (santaiOnlyMode && currentMood === 'liar') selectMood('playful');
   let n0 = document.getElementById('name0').value.trim() || 'Kamu';
   let n1 = document.getElementById('name1').value.trim() || 'Dia';
@@ -508,13 +503,6 @@ function initPionPickers() {
 function initInputListeners() {
   document.getElementById('name0').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('name1').focus(); });
   document.getElementById('name1').addEventListener('keydown', e => { if (e.key === 'Enter') startGame(); });
-  const consent = document.getElementById('consent-17');
-  const startBtn = document.getElementById('btn-start');
-  if (consent && startBtn) {
-    const syncStart = () => { startBtn.disabled = !consent.checked; };
-    consent.addEventListener('change', syncStart);
-    syncStart();
-  }
   const santaiEl = document.getElementById('santai-only');
   if (santaiEl) {
     santaiOnlyMode = santaiEl.checked;
