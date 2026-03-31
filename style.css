@@ -85,9 +85,8 @@ input, textarea { -webkit-user-select: text; user-select: text; }
     backdrop-filter: blur(10px);
     transition: opacity 0.5s ease;
   }
-  #age-overlay.hide {
-    opacity: 0; pointer-events: none; transform: scale(1.1);
-  }
+  /* #age-overlay.hide — REMOVED: selector ini salah, element yang ada adalah #age-gate.
+     Animasi hilang ditangani via JS (opacity + pointerEvents) dan CSS body.age-verified #age-gate */
   .age-card {
     background: linear-gradient(160deg, #1a0f18, #2a0f1e);
     border: 2px solid rgba(244, 63, 94, 0.4);

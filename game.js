@@ -1085,12 +1085,7 @@ function animateSteps(playerIdx, from, to, callback) {
   doStep();
 }
 
-function animateSnakeLadder(playerIdx, from, to, callback) {
-  const el = pionEls[playerIdx];
-  const isSnake = to < from;
-  const dur = isSnake ? 750 : 680;
-
-// Enhancement 4: flash overlay helper
+// Flash overlay helper (dipindah ke outer scope agar tidak redefined setiap panggilan)
 function flashOverlay(type) {
   let overlay = document.getElementById('flash-overlay');
   if (!overlay) {
@@ -1107,6 +1102,11 @@ function flashOverlay(type) {
   overlay.style.opacity = '1';
   setTimeout(() => { overlay.style.opacity = '0'; }, 500);
 }
+
+function animateSnakeLadder(playerIdx, from, to, callback) {
+  const el = pionEls[playerIdx];
+  const isSnake = to < from;
+  const dur = isSnake ? 750 : 680;
 
   if (isSnake) {
     sfx.snake(); vib([80, 40, 80]);
@@ -1864,7 +1864,8 @@ function resolveAfterTOD(completed, isJoker) {
     stats[turn].skipped++;
     stats[turn].curStreak = 0;
     skipStreak[turn]++;
-    if (skipStreak[turn] > 2) {
+    // FIX: threshold >= 2 (konsisten dengan warning di trySkip & showTOD yang cek >= 2)
+    if (skipStreak[turn] >= 2) {
       skipStreak[turn] = 0;
       const overP = currentTodType === 'berani' ? SKIP_OVER_LIMIT_PENALTY_BERANI : SKIP_OVER_LIMIT_PENALTY;
       afterPos = Math.max(1, pendRaw - overP);
@@ -1983,6 +1984,9 @@ function confirmReset() {
   usedTruth = { mild: [], medium: [], hot: [] };
   usedDare = { mild: [], medium: [], hot: [] };
   usedDuo = [];
+  // FIX: reset Set-based no-repeat trackers (sebelumnya terlewat, hanya legacy arrays yang direset)
+  usedTruthSet = new Set(); usedDareSet = new Set(); usedDuoSet = new Set(); usedBeraniSet = new Set();
+  window._adaptedDir = null;
   usedCustomTruth = [];
   usedCustomDare = [];
   skipStreak = [0, 0];
