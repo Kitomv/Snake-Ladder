@@ -586,7 +586,14 @@ function initActionDelegation() {
         toggleMute();
         break;
       case 'go-mood':
+        showMoodConfirm();
+        break;
+      case 'confirm-mode-yes':
+        hideMoodConfirm();
         goToMoodScreen();
+        break;
+      case 'confirm-mode-no':
+        hideMoodConfirm();
         break;
       case 'timer-start':
         manualStartTimer();
@@ -1507,12 +1514,10 @@ function showTOD(sq) {
   const skipWarn = document.getElementById('skip-warning');
   if (type === 'berani') {
     skipWarn.classList.remove('show'); // no skip warning for berani — can't skip at all
-  } else if (skipStreak[turn] >= 2) {
-    const hp = currentTodType === 'berani' ? SKIP_OVER_LIMIT_PENALTY_BERANI : SKIP_OVER_LIMIT_PENALTY;
-    skipWarn.textContent = `⚠️ Skip lagi = HUKUMAN ${hp} kotak mundur!`;
-    skipWarn.classList.add('show');
   } else if (skipStreak[turn] >= 1) {
-    skipWarn.textContent = `⚠️ Skip ke-${skipStreak[turn] + 1} dari 2 — hati-hati!`;
+    // skip ke-2 = langsung hukuman berat
+    const hp = SKIP_OVER_LIMIT_PENALTY;
+    skipWarn.textContent = `⚠️ Skip lagi = HUKUMAN ${hp} kotak mundur!`;
     skipWarn.classList.add('show');
   } else {
     skipWarn.classList.remove('show');
@@ -1769,14 +1774,9 @@ function trySkip() {
     return;
   }
   if (skipStreak[turn] >= 1) {
-    // Show inline confirmation inside the card
-    const isOverLimitSkip = skipStreak[turn] >= 2;
-    const penalty = isOverLimitSkip
-      ? (currentTodType === 'berani' ? SKIP_OVER_LIMIT_PENALTY_BERANI : SKIP_OVER_LIMIT_PENALTY)
-      : (currentTodType === 'berani' ? 5 : 3);
-    const skipHint = isOverLimitSkip
-      ? `Ini <strong style="color:#f87171">skip ke-3</strong> — melebihi batas! Hukuman: mundur <strong style="color:#f43f5e">${penalty} kotak</strong>.`
-      : `Ini skip ke-${skipStreak[turn] + 1} dari 2 — kamu mundur <strong style="color:#f43f5e">${penalty} kotak</strong>!`;
+    // skip ke-2 = langsung hukuman berat — tampilkan konfirmasi
+    const penalty = SKIP_OVER_LIMIT_PENALTY;
+    const skipHint = `Ini <strong style="color:#f87171">skip ke-2</strong> — melebihi batas! Hukuman: mundur <strong style="color:#f43f5e">${penalty} kotak</strong>.`;
     window._todPrevBodyForSkip = document.getElementById('tod-body').innerHTML;
     document.getElementById('tod-body').innerHTML = `
       <div style="text-align:center;padding:16px 4px">
@@ -1929,6 +1929,15 @@ function endGame() {
   document.getElementById('winner-name').textContent = `${p.name} 🏆`;
   document.getElementById('winner-stats-body').innerHTML = buildStatsHTML(true);
   setTimeout(() => document.getElementById('winner-overlay').classList.add('show'), 500);
+}
+
+function showMoodConfirm() {
+  document.getElementById('confirm-mode-overlay').classList.add('show');
+  sfx.pop(0.05);
+}
+
+function hideMoodConfirm() {
+  document.getElementById('confirm-mode-overlay').classList.remove('show');
 }
 
 function goToMoodScreen() {

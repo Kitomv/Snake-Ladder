@@ -387,6 +387,13 @@ input, textarea { -webkit-user-select: text; user-select: text; }
   /* ── JOKER TOKENS ── */
   .joker-area { display: flex; justify-content: center; gap: 8px; margin-top: 2px; }
 
+  /* Joker token di dalam player card — full width, compact */
+  .player-card .joker-token {
+    width: 100%; margin-top: 6px;
+    justify-content: center;
+    font-size: 11px; padding: 3px 8px;
+  }
+
   /* ── GAME DURATION TIMER ── */
   .game-duration {
     display: none;

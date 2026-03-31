@@ -96,9 +96,10 @@
       <div class="pcard-pos" id="ppos-0">Kotak 1</div>
       <div style="display:flex;gap:8px;margin-top:3px;flex-wrap:wrap">
         <div class="pcard-turn" id="pturn-0" style="color:var(--p0)">← giliran</div>
-        <div style="font-size:10px;color:#888" id="pstat-mini-0">✅0 ❌0</div>
+        <div style="font-size:10px;color:#888" id="pstat-mini-0">✅️0 ❌0</div>
         <span class="streak-badge" id="streak-0"></span>
       </div>
+      <div class="joker-token empty" id="joker-0" data-action="use-joker-panel" data-player="0" role="button" tabindex="0">🃏 0</div>
     </div>
     <div class="player-card" id="pcard-1">
       <div class="pcard-name" id="pname-1" style="color:var(--p1);display:flex;align-items:center;gap:6px">
@@ -109,9 +110,10 @@
       <div class="pcard-pos" id="ppos-1">Kotak 1</div>
       <div style="display:flex;gap:8px;margin-top:3px;flex-wrap:wrap">
         <div class="pcard-turn" id="pturn-1" style="color:var(--p1);display:none">← giliran</div>
-        <div style="font-size:10px;color:#888" id="pstat-mini-1">✅0 ❌0</div>
+        <div style="font-size:10px;color:#888" id="pstat-mini-1">✅️0 ❌0</div>
         <span class="streak-badge" id="streak-1"></span>
       </div>
+      <div class="joker-token empty" id="joker-1" data-action="use-joker-panel" data-player="1" role="button" tabindex="0">🃏 0</div>
     </div>
   </div>
 
@@ -135,12 +137,7 @@
         <div>🃏 Kotak emas → joker</div>
         <div>🎯 Kotak ungu → wild</div>
       </div>
-      <div class="joker-area">
-        <div class="joker-token empty" id="joker-0" data-action="use-joker-panel" data-player="0" role="button"
-          tabindex="0">🃏 0</div>
-        <div class="joker-token empty" id="joker-1" data-action="use-joker-panel" data-player="1" role="button"
-          tabindex="0">🃏 0</div>
-      </div>
+
 
       <!-- ── DURASI PERMAINAN ── -->
       <div class="game-duration" id="game-duration">
@@ -286,7 +283,7 @@
             style="color:#fcd34d">setelah</em> tantangan diselesaikan.</li>
         <li style="color:#e2e8f0;font-size:13px;line-height:1.5">✅ Selesaikan = tetap di kotak. ❌ Skip = mundur 3 kotak.
         </li>
-        <li style="color:#e2e8f0;font-size:13px;line-height:1.5">Lewati skip ke-3 berturut-turut = <strong
+        <li style="color:#e2e8f0;font-size:13px;line-height:1.5">Skip ke-<strong style="color:#f87171">2</strong> berturut-turut = <strong
             style="color:#f87171">hukuman</strong> mundur <strong style="color:#f43f5e">7 kotak</strong> (Dare/Truth
           biasa) atau <strong style="color:#fb923c">10 kotak</strong> (Kartu Berani).</li>
         <li style="color:#e2e8f0;font-size:13px;line-height:1.5">⏱️ <strong style="color:#10b981">Dare punya
@@ -349,6 +346,52 @@
       <button type="button" class="btn-custom-save" data-action="hide-custom">
         Simpan & Tutup ✓
       </button>
+    </div>
+  </div>
+
+  <!-- ── CONFIRM PINDAH MODE ── -->
+  <div id="confirm-mode-overlay" style="
+    display:none;position:fixed;inset:0;
+    background:rgba(0,0,0,0.88);
+    align-items:center;justify-content:center;
+    z-index:9000;padding:20px;">
+    <div style="
+      background:linear-gradient(160deg,#1a0f18,#2a0f1e);
+      border:2px solid rgba(244,63,94,0.45);
+      border-radius:24px;padding:28px 24px;
+      max-width:380px;width:100%;text-align:center;
+      animation:modalIn 0.35s cubic-bezier(0.34,1.56,0.64,1);
+      box-shadow:0 20px 60px rgba(0,0,0,0.7),0 0 40px rgba(244,63,94,0.15);">
+      <div style="font-size:48px;margin-bottom:12px">🚪</div>
+      <div style="font-family:'Playfair Display',serif;font-size:20px;font-weight:900;
+        background:linear-gradient(90deg,#f472b6,#fcd34d);
+        -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
+        margin-bottom:10px">Pindah Mode?</div>
+      <div style="font-size:13px;color:rgba(255,255,255,0.6);line-height:1.6;margin-bottom:24px">
+        Progress game saat ini akan <strong style="color:#fda4af">hilang</strong>.<br>
+        Yakin mau ganti mode dan mulai ulang?
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <button type="button" data-action="confirm-mode-yes" style="
+          padding:14px;border:none;border-radius:50px;
+          background:linear-gradient(135deg,#f43f5e,#fb923c);
+          color:white;font-family:'Nunito',sans-serif;font-weight:900;
+          font-size:15px;cursor:pointer;
+          box-shadow:0 6px 20px rgba(244,63,94,0.4);transition:all .2s"
+          onmouseover="this.style.transform='translateY(-2px)'"
+          onmouseout="this.style.transform=''">
+          🎭 Ya, Ganti Mode
+        </button>
+        <button type="button" data-action="confirm-mode-no" style="
+          padding:12px;border:1.5px solid rgba(255,255,255,0.12);
+          border-radius:50px;background:rgba(255,255,255,0.05);
+          color:#aaa;font-family:'Nunito',sans-serif;font-weight:800;
+          font-size:14px;cursor:pointer;transition:all .2s"
+          onmouseover="this.style.background='rgba(255,255,255,0.1)';this.style.color='white'"
+          onmouseout="this.style.background='rgba(255,255,255,0.05)';this.style.color='#aaa'">
+          ❌ Batal, Lanjut Main
+        </button>
+      </div>
     </div>
   </div>
 
