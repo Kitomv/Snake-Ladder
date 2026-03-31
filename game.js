@@ -1932,12 +1932,12 @@ function endGame() {
 }
 
 function showMoodConfirm() {
-  document.getElementById('confirm-mode-overlay').classList.add('show');
+  document.getElementById('confirm-mode-overlay').style.display = 'flex';
   sfx.pop(0.05);
 }
 
 function hideMoodConfirm() {
-  document.getElementById('confirm-mode-overlay').classList.remove('show');
+  document.getElementById('confirm-mode-overlay').style.display = 'none';
 }
 
 function goToMoodScreen() {
